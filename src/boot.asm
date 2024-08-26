@@ -4,7 +4,7 @@ MBMAGIC equ 0xBADB002 ; identifier for the multiboot header.
 MBALIGN equ 1 << 0    ; require that all boot modules loaded are page boundary aligned.
 MBMEM   equ 1 << 1    ; 'mem_*' fields must be included.
 MBFLAGS equ MBALIGN | MBMEM
-MBCHECKSUM equ -(MAGIC + MBFLAGS) ; this when added to the other fields equals zero.
+MBCHECKSUM equ -(MBMAGIC + MBFLAGS) ; this when added to the other fields equals zero.
 
 ; Declare the multiboot header as according to the multiboot standard, linked above.
 section .multiboot
