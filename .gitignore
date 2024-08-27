@@ -1,0 +1,4 @@
+.git/
+cross/
+*.o
+src/kernel.bin

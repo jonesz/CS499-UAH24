@@ -1,18 +1,19 @@
-BUILD_DIR=build
+CC=i686-elf-gcc
+HDRS=term.h
 
-kernel.bin: $(BUILD_DIR)/boot.o $(BUILD_DIR)/kernel.o
-	i686-elf-gcc -T linker.ld -o $@ -ffreestanding -O2 -nostdlib $^ -lgcc
+kernel.bin: boot.o kernel.o term.o $(HDRS)
+	$(CC) -T linker.ld -o $@ -ffreestanding -O2 -nostdlib $^ -lgcc
 
-$(BUILD_DIR)/boot.o: boot.asm
+boot.o: boot.asm
 	nasm -felf32 $^ -o $@
 
-$(BUILD_DIR)/kernel.o: kernel.c
-	i686-elf-gcc -c $^ -o $@ -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+%.o: %.c
+	$(CC) -c $< -std=gnu99 -ffreestanding -O2 -Wall -Wextra
 
 .PHONY: clean format
 
 clean:
-	$(RM) $(BUILD_DIR)/*
+	$(RM) *.o kernel.bin
 
 format:
 	clang-format -i *.c *.h
