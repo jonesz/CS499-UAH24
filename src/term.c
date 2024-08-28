@@ -10,10 +10,10 @@ static size_t strlen(const char *str);
 static const size_t VGA_WIDTH = 80;  // Width of the screen.
 static const size_t VGA_HEIGHT = 25; // Height of the screen.
 
-size_t term_row;
-size_t term_col;
-uint8_t term_color; //unused at the moment
-uint16_t *term_buf;
+size_t term_row;    // Current row the terminal is at
+size_t term_col;    // Current column the terminal is at
+uint8_t term_color; // Unused at the moment
+uint16_t *term_buf; // Terminal buffer
 
 /* TODO: Rewrite this, I took this off of OSDev, so it needs to be sourced or
  * rewritten. */
@@ -62,13 +62,9 @@ void term_init() {
   }
 }
 
-// Write out a string to the terminal buffer.
-void term_write(const char *s) {
+void term_write_color(const char *s, const uint8_t color)
+{
   size_t len = strlen(s);
-  // TODO: This is wrong, but it's proof-of-concept at this point. Fix later.
-  // for (size_t i = 0; i < len; i++) {
-  //   term_buf[i] = vga_entry(s[i], VGA_COLOR_WHITE);
-  // }
   for (size_t i = 0; i < len; i++) {
     
     if(++term_col == VGA_WIDTH) {
@@ -79,28 +75,39 @@ void term_write(const char *s) {
       // TODO: Add scrolling the terminal up a line
     }
 
+    if(s[i] == '\n') {
+      term_row++;
+      term_col = 0;
+      continue;
+    }
+
     size_t term_pos = term_row * VGA_WIDTH + term_col;
-    term_buf[term_pos] = vga_entry(s[i], VGA_COLOR_WHITE);
+    term_buf[term_pos] = vga_entry(s[i], color);
   }
+}
+
+// Write out a string to the terminal buffer.
+void term_write(const char *s) {
+  term_write_color(s, VGA_COLOR_WHITE);
+}
+
+// Write an error to the terminal buffer
+// TODO: Anything besides just being red
+void term_err(const char *s) {
+  term_write_color(s, VGA_COLOR_RED);
+}
+
+// Write a warning to the terminal buffer
+void term_warn(const char *s) {
+  //There is no yellow so I picked a random color for now
+  term_write_color(s, VGA_COLOR_MAGENTA);
 }
 
 //Write to the terminal buffer and end with a newline
 //This seems kind of redundent but I added it anyway
 //Feel free to remove
 void term_writeline(const char *s) {
-  size_t len = strlen(s);
-  for (size_t i = 0; i < len; i++) {
-    if(++term_col == VGA_WIDTH) {
-      term_row++;
-      term_col = 0;
-    }
-    if(term_row + 1 == VGA_HEIGHT) {
-      // TODO: Add scrolling the terminal up a line
-    }
-    
-    size_t term_pos = term_row * VGA_WIDTH + term_col;
-    term_buf[term_pos] = vga_entry(s[i], VGA_COLOR_WHITE);
-  }
+  term_write_color(s, VGA_COLOR_WHITE);
   term_col = 0;
   term_row++;
 }

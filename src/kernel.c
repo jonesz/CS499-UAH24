@@ -3,6 +3,8 @@
 
 void kernel_main(void) {
   term_init();
-  term_writeline("MiniOS Kernel Team #1");
-  term_writeline("Testing");
+  term_write("MiniOS Kernel Team #1\n");
+  term_writeline("Testing writeline");
+  term_err("This is an error\n");
+  term_warn("This is a warning\n");
 }
