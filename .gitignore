@@ -2,3 +2,4 @@
 cross/
 *.o
 src/kernel.bin
+src/start.sh
