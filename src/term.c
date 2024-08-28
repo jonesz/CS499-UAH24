@@ -10,6 +10,11 @@ static size_t strlen(const char *str);
 static const size_t VGA_WIDTH = 80;  // Width of the screen.
 static const size_t VGA_HEIGHT = 25; // Height of the screen.
 
+size_t term_row;
+size_t term_col;
+uint8_t term_color; //unused at the moment
+uint16_t *term_buf;
+
 /* TODO: Rewrite this, I took this off of OSDev, so it needs to be sourced or
  * rewritten. */
 enum vga_color {
@@ -45,12 +50,14 @@ static inline uint16_t vga_entry(unsigned char uc, uint8_t color) {
 
 void term_init() {
   // TODO: Apparently this is deprecated in UEFI.
-  uint16_t *buf = (uint16_t *)0xB8000;
+  term_buf = (uint16_t *)0xB8000;
+  term_row = 0;
+  term_col = 0;
 
   for (size_t y = 0; y < VGA_HEIGHT; y++) {
     for (size_t x = 0; x < VGA_WIDTH; x++) {
       const size_t idx = y * VGA_WIDTH + x;
-      buf[idx] = vga_entry(' ', VGA_COLOR_WHITE);
+      term_buf[idx] = vga_entry(' ', VGA_COLOR_WHITE);
     }
   }
 }
@@ -59,9 +66,8 @@ void term_init() {
 void term_write(const char *s) {
   size_t len = strlen(s);
   // TODO: This is wrong, but it's proof-of-concept at this point. Fix later.
-  uint16_t *buf = (uint16_t *)0xB8000;
   for (size_t i = 0; i < len; i++) {
-    buf[i] = vga_entry(s[i], VGA_COLOR_WHITE);
+    term_buf[i] = vga_entry(s[i], VGA_COLOR_WHITE);
   }
 }
 
