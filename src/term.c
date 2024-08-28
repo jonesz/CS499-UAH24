@@ -66,9 +66,43 @@ void term_init() {
 void term_write(const char *s) {
   size_t len = strlen(s);
   // TODO: This is wrong, but it's proof-of-concept at this point. Fix later.
+  // for (size_t i = 0; i < len; i++) {
+  //   term_buf[i] = vga_entry(s[i], VGA_COLOR_WHITE);
+  // }
   for (size_t i = 0; i < len; i++) {
-    term_buf[i] = vga_entry(s[i], VGA_COLOR_WHITE);
+    
+    if(++term_col == VGA_WIDTH) {
+      term_row++;
+      term_col = 0;
+    }
+    if(term_row + 1 == VGA_HEIGHT) {
+      // TODO: Add scrolling the terminal up a line
+    }
+
+    size_t term_pos = term_row * VGA_WIDTH + term_col;
+    term_buf[term_pos] = vga_entry(s[i], VGA_COLOR_WHITE);
   }
+}
+
+//Write to the terminal buffer and end with a newline
+//This seems kind of redundent but I added it anyway
+//Feel free to remove
+void term_writeline(const char *s) {
+  size_t len = strlen(s);
+  for (size_t i = 0; i < len; i++) {
+    if(++term_col == VGA_WIDTH) {
+      term_row++;
+      term_col = 0;
+    }
+    if(term_row + 1 == VGA_HEIGHT) {
+      // TODO: Add scrolling the terminal up a line
+    }
+    
+    size_t term_pos = term_row * VGA_WIDTH + term_col;
+    term_buf[term_pos] = vga_entry(s[i], VGA_COLOR_WHITE);
+  }
+  term_col = 0;
+  term_row++;
 }
 
 // Return the size of a string.
