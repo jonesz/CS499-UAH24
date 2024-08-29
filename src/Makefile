@@ -17,3 +17,6 @@ clean:
 
 format:
 	clang-format -i *.c *.h
+
+start:
+	qemu-system-i386 -kernel kernel.bin
