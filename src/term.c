@@ -54,10 +54,10 @@ static inline uint16_t vga_entry(unsigned char uc, uint8_t color) {
 // term_scroll(0) does nothing
 // NOTE (Britton): All the text from lines 0-scroll_lines is lost
 void term_scroll(uint32_t scroll_lines) {
-  if(scroll_lines >= VGA_HEIGHT) {
+  if (scroll_lines >= VGA_HEIGHT) {
     scroll_lines = 1;
   }
-  uint16_t* term_buf_line_2 = term_buf + VGA_WIDTH * scroll_lines;
+  uint16_t *term_buf_line_2 = term_buf + VGA_WIDTH * scroll_lines;
   for (size_t i = 0; i < (VGA_HEIGHT - scroll_lines + 1) * VGA_WIDTH; i++) {
     *(term_buf + i) = *(term_buf_line_2 + i);
   }
@@ -65,7 +65,7 @@ void term_scroll(uint32_t scroll_lines) {
 
 void term_init() {
   // TODO: Apparently this is deprecated in UEFI.
-  term_buf = VGA_TEXT_MODE_BUFFER; 
+  term_buf = VGA_TEXT_MODE_BUFFER;
   term_row = 0;
   term_col = 0;
 
