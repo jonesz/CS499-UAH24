@@ -86,8 +86,6 @@ void term_write_color(const char *s, const uint8_t color) {
       term_col = 0;
     }
     // Scroll the terminal
-    // Note (Britton): Comping with term_row + 1 leaves empty row on the bottom
-    // Is this intended behavior?
     if (term_row + 1 == VGA_HEIGHT) {
       term_scroll(1);
       term_row--;
@@ -114,8 +112,8 @@ void term_err(const char *s) { term_write_color(s, VGA_COLOR_RED); }
 
 // Write a warning to the terminal buffer
 void term_warn(const char *s) {
-  // There is no yellow so I picked a random color for now
-  term_write_color(s, VGA_COLOR_MAGENTA);
+  // "Light brown" is actually yellow
+  term_write_color(s, VGA_COLOR_LIGHT_BROWN);
 }
 
 // Write to the terminal buffer and end with a newline
