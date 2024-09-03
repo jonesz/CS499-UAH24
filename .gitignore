@@ -3,4 +3,3 @@ cross/
 *.o
 src/kernel.bin
 src/kernel.iso
-iso/
