@@ -5,6 +5,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// VGA text mode buffer base pointer
+#define VGA_TEXT_MODE_BUFFER (uint16_t *)0xB8000
+
 static size_t strlen(const char *str);
 
 static const size_t VGA_WIDTH = 80;  // Width of the screen.
@@ -47,9 +50,22 @@ static inline uint16_t vga_entry(unsigned char uc, uint8_t color) {
   return (uint16_t)uc | (uint16_t)color << 8;
 }
 
+// Scrolls the terminal down by scroll_lines lines
+// term_scroll(0) does nothing
+// NOTE (Britton): All the text from lines 0-scroll_lines is lost
+void term_scroll(uint32_t scroll_lines) {
+  if (scroll_lines >= VGA_HEIGHT) {
+    scroll_lines = 1;
+  }
+  uint16_t *term_buf_line_2 = term_buf + VGA_WIDTH * scroll_lines;
+  for (size_t i = 0; i < (VGA_HEIGHT - scroll_lines + 1) * VGA_WIDTH; i++) {
+    *(term_buf + i) = *(term_buf_line_2 + i);
+  }
+}
+
 void term_init() {
   // TODO: Apparently this is deprecated in UEFI.
-  term_buf = (uint16_t *)0xB8000;
+  term_buf = VGA_TEXT_MODE_BUFFER;
   term_row = 0;
   term_col = 0;
 
@@ -69,8 +85,11 @@ void term_write_color(const char *s, const uint8_t color) {
       term_row++;
       term_col = 0;
     }
+    // Scroll the terminal
     if (term_row + 1 == VGA_HEIGHT) {
-      // TODO: Add scrolling the terminal up a line
+      term_scroll(1);
+      term_row--;
+      term_col = 1;
     }
 
     if (s[i] == '\n') {
@@ -93,8 +112,8 @@ void term_err(const char *s) { term_write_color(s, VGA_COLOR_RED); }
 
 // Write a warning to the terminal buffer
 void term_warn(const char *s) {
-  // There is no yellow so I picked a random color for now
-  term_write_color(s, VGA_COLOR_MAGENTA);
+  // "Light brown" is actually yellow
+  term_write_color(s, VGA_COLOR_LIGHT_BROWN);
 }
 
 // Write to the terminal buffer and end with a newline
