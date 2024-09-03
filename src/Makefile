@@ -1,7 +1,7 @@
 CC=i686-elf-gcc
 HDRS=term.h
 
-kernel.bin: boot.o kernel.o term.o $(HDRS)
+kernel.bin: gdt.o boot.o kernel.o term.o $(HDRS)
 	$(CC) -T linker.ld -o $@ -ffreestanding -O2 -nostdlib $^ -lgcc
 
 boot.o: boot.asm
