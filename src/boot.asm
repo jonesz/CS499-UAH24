@@ -62,8 +62,6 @@ _start:
         mov ss, ax
 
 ; Enter the main kernel.
-        mov ebx, gdt_base
-        push ebx
         extern kernel_main
         call kernel_main
 
