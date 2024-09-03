@@ -20,3 +20,12 @@ format:
 
 start:
 	qemu-system-i386 -kernel kernel.bin
+
+iso:
+	install -D kernel.bin ../iso/boot/kernel.bin
+	install -D ../grub.cfg ../iso/boot/grub/grub.cfg
+	grub-mkrescue -o kernel.iso ../iso
+	cp kernel.iso ../iso
+
+start-iso:
+	qemu-system-i386 -cdrom ../iso/kernel.iso
