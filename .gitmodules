@@ -1,3 +1,6 @@
 [submodule "mlibc"]
 	path = ext/mlibc
 	url = https://github.com/managarm/mlibc
+[submodule "ext/pdclib"]
+	path = ext/pdclib
+	url = https://github.com/DevSolar/pdclib
