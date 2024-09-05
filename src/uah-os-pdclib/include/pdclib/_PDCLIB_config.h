@@ -849,7 +849,7 @@ typedef unsigned int wint_t;
 /* appropriate definitions from a platform's <pthread.h>, giving output that  */
 /* can be copy & pasted here.                                                 */
 
-#cmakedefine __STDC_NO_THREADS__ 1
+#define __STDC_NO_THREADS__ 1
 
 #ifndef __STDC_NO_THREADS__
 
