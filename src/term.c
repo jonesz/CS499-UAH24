@@ -4,11 +4,10 @@
  */
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 // VGA text mode buffer base pointer
 #define VGA_TEXT_MODE_BUFFER (uint16_t *)0xB8000
-
-static size_t strlen(const char *str);
 
 static const size_t VGA_WIDTH = 80;  // Width of the screen.
 static const size_t VGA_HEIGHT = 25; // Height of the screen.
@@ -123,14 +122,4 @@ void term_writeline(const char *s) {
   term_write_color(s, VGA_COLOR_WHITE);
   term_col = 0;
   term_row++;
-}
-
-// Return the size of a string.
-static size_t strlen(const char *str) {
-  size_t len = 0;
-  while (str[len]) {
-    len++;
-  }
-
-  return len;
 }

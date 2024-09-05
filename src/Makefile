@@ -13,7 +13,7 @@ boot.o: boot.asm
 	nasm -felf32 $^ -o $@
 
 %.o: %.c
-	$(CC) -c $< -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+	$(CC) -c $< -std=gnu99 -ffreestanding -O2 -Wall -Wextra -I include/
 
 kernel.iso: kernel.bin grub.cfg
 	mkdir -p build/
