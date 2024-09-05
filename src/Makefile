@@ -3,8 +3,11 @@ HDRS=term.h
 
 all: kernel.bin kernel.iso
 
-kernel.bin: gdt.o boot.o kernel.o term.o $(HDRS)
-	$(CC) -T linker.ld -o $@ -ffreestanding -O2 -nostdlib $^ -lgcc
+kernel.bin: gdt.o boot.o kernel.o term.o $(HDRS) libpdclib.a
+	$(CC) -T linker.ld -o $@ -ffreestanding -O2 -nostdlib $^ -lgcc -I include/
+
+libpdclib.a:
+	./build_libc.sh
 
 boot.o: boot.asm
 	nasm -felf32 $^ -o $@
@@ -28,7 +31,7 @@ start-iso: kernel.iso
 .PHONY: clean format
 
 clean:
-	$(RM) *.o kernel.bin kernel.iso
+	$(RM) *.o kernel.bin kernel.iso *.a
 
 format:
 	clang-format -i *.c *.h

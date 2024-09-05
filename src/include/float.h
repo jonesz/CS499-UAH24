@@ -7,147 +7,76 @@
 #ifndef _PDCLIB_FLOAT_H
 #define _PDCLIB_FLOAT_H _PDCLIB_FLOAT_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "pdclib/_PDCLIB_config.h"
 
-#include "pdclib/_PDCLIB_internal.h"
+#define FLT_ROUNDS      _PDCLIB_FLT_ROUNDS
+#define FLT_EVAL_METHOD _PDCLIB_FLT_EVAL_METHOD
+#define DECIMAL_DIG     _PDCLIB_DECIMAL_DIG
 
-/* The following parameters are used to define the model for each
-   floating-point type:
+/* Radix of exponent representation */
+#define FLT_RADIX      __FLT_RADIX__
+/* Number of base-FLT_RADIX digits in the significand of a float */
+#define FLT_MANT_DIG   __FLT_MANT_DIG__
+/* Number of decimal digits of precision in a float */
+#define FLT_DIG        __FLT_DIG__
+/* Difference between 1.0 and the minimum float greater than 1.0 */
+#define FLT_EPSILON    __FLT_EPSILON__
+/* Minimum int x such that FLT_RADIX**(x-1) is a normalised float */
+#define FLT_MIN_EXP    __FLT_MIN_EXP__
+/* Minimum normalised float */
+#define FLT_MIN        __FLT_MIN__
+/* Minimum int x such that 10**x is a normalised float */
+#define FLT_MIN_10_EXP __FLT_MIN_10_EXP__
+/* Maximum int x such that FLT_RADIX**(x-1) is a representable float */
+#define FLT_MAX_EXP    __FLT_MAX_EXP__
+/* Maximum float */
+#define FLT_MAX        __FLT_MAX__
+/* Maximum int x such that 10**x is a representable float */
+#define FLT_MAX_10_EXP __FLT_MAX_10_EXP__
 
-     s  sign (±1)
-     b  base or radix of exponent representation (an integer > 1)
-     e  exponent (an integer between a minimum eₘₙ and a maximum eₘₓ)
-     p  precision (the number of base-b digits in the significand)
-     ƒₖ nonnegative integers less than b (the significand digits)
+/* Number of base-FLT_RADIX digits in the significand of a double */
+#define DBL_MANT_DIG   __DBL_MANT_DIG__
+/* Number of decimal digits of precision in a double */
+#define DBL_DIG        __DBL_DIG__
+/* Difference between 1.0 and the minimum double greater than 1.0 */
+#define DBL_EPSILON    __DBL_EPSILON__
+/* Minimum int x such that FLT_RADIX**(x-1) is a normalised double */
+#define DBL_MIN_EXP    __DBL_MIN_EXP__
+/* Minimum normalised double */
+#define DBL_MIN        __DBL_MIN__
+/* Minimum int x such that 10**x is a normalised double */
+#define DBL_MIN_10_EXP __DBL_MIN_10_EXP__
+/* Maximum int x such that FLT_RADIX**(x-1) is a representable double */
+#define DBL_MAX_EXP    __DBL_MAX_EXP__
+/* Maximum double */
+#define DBL_MAX        __DBL_MAX__
+/* Maximum int x such that 10**x is a representable double */
+#define DBL_MAX_10_EXP __DBL_MAX_10_EXP__
 
-   A floating-point number (x) is defined by the following model:
-
-     x = sbᵉ ₖ₌₁∑ᵖ ƒₖb⁻ᵏ, eₘₙ ≤ e ≤ eₘₓ
-
-   In addition to normalized floating-point numbers (ƒ₁ > 0 if x ≠ 0),
-   floating types may be able to contain other kinds of floating-point
-   numbers, such as subnormal floating-point numbers (x ≠ 0, e = eₘₙ,
-   ƒ₁ = 0) and unnormalized floating-point numbers (x ≠ 0, e > eₘₙ,
-   ƒ₁ = 0), and values that are not floating-point numbers, such as
-   infinities and NaNs.
-*/
-
-/* Whether rounding toward zero (0), to nearest (1), toward positive
-   infinity (2), toward negative infinity (3), or indeterminate (-1).
-   FLT_ROUNDS is not a compile-time constant, and may change due to
-   calls to fesetround() (in <fenv.h>).
-*/
-#define FLT_ROUNDS _PDCLIB_FLT_ROUNDS
-
-/* Whether operations are done in the given type (0), float is
-   evaluated as double (1), float and double are evaluated as
-   long double (2), or evaluation method is indeterminate (-1).
-*/
-#define FLT_EVAL_METHOD  _PDCLIB_FLT_EVAL_METHOD
-
-/* Whether the type supports subnormal numbers (1), does not support
-   them (0), or support is indeterminate (-1).
-*/
-#define FLT_HAS_SUBNORM  _PDCLIB_FLT_HAS_SUBNORM
-#define DBL_HAS_SUBNORM  _PDCLIB_DBL_HAS_SUBNORM
-#define LDBL_HAS_SUBNORM _PDCLIB_LDBL_HAS_SUBNORM
-
-/* Radix of exponent representation, b */
-#define FLT_RADIX        _PDCLIB_FLT_RADIX
-
-/* Number of base-b digits in the floating point significand, p */
-#define FLT_MANT_DIG     _PDCLIB_FLT_MANT_DIG
-#define DBL_MANT_DIG     _PDCLIB_DBL_MANT_DIG
-#define LDBL_MANT_DIG    _PDCLIB_LDBL_MANT_DIG
-
-/* Number of decimal digits, n, so that any floating point number with
-   p radix b digits can be rounded to a floating point number with n
-   decimal digits and back without changing the value
-        pₘₓlog₁₀b  if b is a power of 10,
-   ⌈1 + pₘₓlog₁₀b⌉ otherwise.
-*/
-#define FLT_DECIMAL_DIG  _PDCLIB_FLT_DECIMAL_DIG
-#define DBL_DECIMAL_DIG  _PDCLIB_DBL_DECIMAL_DIG
-#define LDBL_DECIMAL_DIG _PDCLIB_LDBL_DECIMAL_DIG
-
-/* As above, for the widest supported type. */
-#define DECIMAL_DIG      _PDCLIB_DECIMAL_DIG
-
-/* Number of decimal digits, q, so that any floating point number with
-   q decimal digits can be rounded to a floating point number with p
-   radix b digits and back without changing the value of the q decimal
-   digits.
-         p log₁₀b   if b is a power of 10,
-   ⌊(p - 1)log₁₀b⌋  otherwise.
-*/
-#define FLT_DIG          _PDCLIB_FLT_DIG
-#define DBL_DIG          _PDCLIB_DBL_DIG
-#define LDBL_DIG         _PDCLIB_LDBL_DIG
-
-/* Minimum negative integer such that FLT_RADIX raised to one less
-   than that power is a normalized floating point number, eₘₙ
-*/
-#define FLT_MIN_EXP      _PDCLIB_FLT_MIN_EXP
-#define DBL_MIN_EXP      _PDCLIB_DBL_MIN_EXP
-#define LDBL_MIN_EXP     _PDCLIB_LDBL_MIN_EXP
-
-/* Minimum negative integer such that 10 raised to one less than that
-   power is in the range of normalized floating point numbers,
-   ⌈log₁₀b^{eₘₙ⁻¹}⌉
-*/
-#define FLT_MIN_10_EXP   _PDCLIB_FLT_MIN_10_EXP
-#define DBL_MIN_10_EXP   _PDCLIB_DBL_MIN_10_EXP
-#define LDBL_MIN_10_EXP  _PDCLIB_LDBL_MIN_10_EXP
-
-/* Maximum integer such that FLT_RADIX raised to one less than that
-   power is a representable finite floating point number, eₘₓ
-*/
-#define FLT_MAX_EXP      _PDCLIB_FLT_MAX_EXP
-#define DBL_MAX_EXP      _PDCLIB_DBL_MAX_EXP
-#define LDBL_MAX_EXP     _PDCLIB_LDBL_MAX_EXP
-
-/* Maximum integer such that 10 raised to that power is in the range
-   of representable finite floating-point numbers,
-   ⌊log₁₀((1-b⁻ᵖ)b^{eₘₓ})⌋
-*/
-#define FLT_MAX_10_EXP   _PDCLIB_FLT_MAX_10_EXP
-#define DBL_MAX_10_EXP   _PDCLIB_DBL_MAX_10_EXP
-#define LDBL_MAX_10_EXP  _PDCLIB_LDBL_MAX_10_EXP
-
-/* Maximum representable finite floating-point number, (1-b⁻ᵖ)b^{eₘₓ}
-*/
-#define FLT_MAX          _PDCLIB_FLT_MAX
-#define DBL_MAX          _PDCLIB_DBL_MAX
-#define LDBL_MAX         _PDCLIB_LDBL_MAX
-
-/* Difference between 1 and the least value greater than 1 that is
-   representable in the type, b¹⁻ᵖ
-*/
-#define FLT_EPSILON      _PDCLIB_FLT_EPSILON
-#define DBL_EPSILON      _PDCLIB_DBL_EPSILON
-#define LDBL_EPSILON     _PDCLIB_LDBL_EPSILON
-
-/* Minimum normalized positive floating-point number, b^{eₘₙ⁻¹} */
-#define FLT_MIN          _PDCLIB_FLT_MIN
-#define DBL_MIN          _PDCLIB_DBL_MIN
-#define LDBL_MIN         _PDCLIB_LDBL_MIN
-
-/* Minimum positive floating-point number */
-#define FLT_TRUE_MIN     _PDCLIB_FLT_TRUE_MIN
-#define DBL_TRUE_MIN     _PDCLIB_DBL_TRUE_MIN
-#define LDBL_TRUE_MIN    _PDCLIB_LDBL_TRUE_MIN
+/* Number of base-FLT_RADIX digits in the significand of a long double */
+#define LDBL_MANT_DIG   __LDBL_MANT_DIG__
+/* Number of decimal digits of precision in a long double */
+#define LDBL_DIG        __LDBL_DIG__
+/* Difference between 1.0 and the minimum long double greater than 1.0 */
+#define LDBL_EPSILON    __LDBL_EPSILON__
+/* Minimum int x such that FLT_RADIX**(x-1) is a normalised long double */
+#define LDBL_MIN_EXP    __LDBL_MIN_EXP__
+/* Minimum normalised long double */
+#define LDBL_MIN        __LDBL_MIN__
+/* Minimum int x such that 10**x is a normalised long double */
+#define LDBL_MIN_10_EXP __LDBL_MIN_10_EXP__
+/* Maximum int x such that FLT_RADIX**(x-1) is a representable long double */
+#define LDBL_MAX_EXP    __LDBL_MAX_EXP__
+/* Maximum long double */
+#define LDBL_MAX        __LDBL_MAX__
+/* Maximum int x such that 10**x is a representable long double */
+#define LDBL_MAX_10_EXP __LDBL_MAX_10_EXP__
 
 /* Extension hook for downstream projects that want to have non-standard
    extensions to standard headers.
 */
 #ifdef _PDCLIB_EXTEND_FLOAT_H
 #include _PDCLIB_EXTEND_FLOAT_H
-#endif
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif
