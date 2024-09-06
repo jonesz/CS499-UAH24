@@ -69,6 +69,7 @@ _start:
         mov ss, ax
 
         ; Set up identity Page tables
+        ; TODO(Britton): Support non-identity paging
         mov eax, page_tables
         push eax
         mov eax, page_directory
@@ -81,9 +82,6 @@ _start:
         mov eax, cr0
         or eax, 0x80000001
         mov cr0, eax
-        
-        mov ecx, page_tables
-        push ecx 
 
 ; Enter the main kernel.
         extern kernel_main
