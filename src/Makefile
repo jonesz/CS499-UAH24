@@ -3,7 +3,7 @@ HDRS=term.h
 
 all: kernel.bin kernel.iso
 
-kernel.bin: gdt.o boot.o kernel.o term.o $(HDRS)
+kernel.bin: paging.o gdt.o boot.o kernel.o term.o $(HDRS)
 	$(CC) -T linker.ld -o $@ -ffreestanding -O2 -nostdlib $^ -lgcc
 
 boot.o: boot.asm

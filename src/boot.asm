@@ -28,6 +28,13 @@ align 16
 gdt_descriptor  DW 0
                 DD 0
 
+; Prepare space for the Page Directory
+align 4096
+page_directory times 1024 DD 0
+
+align 4096
+page_tables times 1024 * 1024 DD 0
+
 ; Bootloader jumps to this `_start` as specified by the linker.
 section .text
 
@@ -60,6 +67,23 @@ _start:
         mov fs, ax
         mov gs, ax
         mov ss, ax
+
+        ; Set up identity Page tables
+        mov eax, page_tables
+        push eax
+        mov eax, page_directory
+        push eax
+        extern page_map_identity
+        call page_map_identity
+        ; Enable Paging
+        mov eax, page_directory
+        mov cr3, eax
+        mov eax, cr0
+        or eax, 0x80000001
+        mov cr0, eax
+        
+        mov ecx, page_tables
+        push ecx 
 
 ; Enter the main kernel.
         extern kernel_main
