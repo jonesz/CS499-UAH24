@@ -1,7 +1,7 @@
 /** src/kernel.c */
 #include "term.h"
 
-void kernel_main(void) {
+void kernel_main() {
   term_init();
   term_write("MiniOS Kernel Team #1\n");
   term_writeline("Testing writeline");
