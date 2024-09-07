@@ -38,6 +38,10 @@ _start:
 ; paging is disabled. Setup the stack.
         mov esp, stack_top
 
+        ;Gets memory map info from GRUB
+        push eax
+        push ebx
+
 ; TODO: Setup Paging here and any state that is needed before
 ; the kernel is loaded.
         ; Sets up gdt
@@ -48,6 +52,7 @@ _start:
         push ebx
         extern set_up_gdt
         call set_up_gdt
+        pop ebx
         lgdt [gdt_descriptor]
         ; TODO(Britton): Trying to reload cs fails on my machine,
         ; but in testing it was already set to 8.
