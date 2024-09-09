@@ -1,6 +1,8 @@
 /** src/kernel.c */
+#include "kmalloc.h"
 #include "multiboot.h"
 #include "term.h"
+#include <stddef.h>
 
 void kernel_main(multiboot_info_t *mbd, unsigned int magic) {
   term_init();
@@ -20,18 +22,18 @@ void kernel_main(multiboot_info_t *mbd, unsigned int magic) {
   }
 
   /* Loop through the memory map and display the values */
-  int i;
-  for (i = 0; i < mbd->mmap_length; i += sizeof(multiboot_memory_map_t)) {
+  for (size_t i = 0; i < mbd->mmap_length;
+       i += sizeof(multiboot_memory_map_t)) {
     multiboot_memory_map_t *mmmt =
         (multiboot_memory_map_t *)(mbd->mmap_addr + i);
 
     // We don't have printf implemented yet
     // printf("Start Addr: %x | Length: %x | Size: %x | Type: %d\n",
     //     mmmt->addr, mmmt->len, mmmt->size, mmmt->type);
-    term_write("Start Addr: | ");
-    term_write("Length: | ");
-    term_write("Size: | ");
-    term_write("Type: |\n");
+    // term_write("Start Addr: | ");
+    // term_write("Length: | ");
+    // term_write("Size: | ");
+    // term_write("Type: |\n");
 
     if (mmmt->type == MULTIBOOT_MEMORY_AVAILABLE) {
       /*
@@ -42,4 +44,6 @@ void kernel_main(multiboot_info_t *mbd, unsigned int magic) {
        */
     }
   }
+
+  kmalloc(sizeof(int));
 }

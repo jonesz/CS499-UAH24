@@ -77,7 +77,7 @@ void term_init() {
   }
 }
 
-void term_write_color(const char *s, const uint8_t color) {
+void term_write_color(const char *s, const enum vga_color color) {
   size_t len = strlen(s);
   for (size_t i = 0; i < len; i++) {
 
