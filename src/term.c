@@ -4,11 +4,10 @@
  */
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 // VGA text mode buffer base pointer
 #define VGA_TEXT_MODE_BUFFER (uint16_t *)0xB8000
-
-static size_t strlen(const char *str);
 
 static const size_t VGA_WIDTH = 80;  // Width of the screen.
 static const size_t VGA_HEIGHT = 25; // Height of the screen.
@@ -77,6 +76,29 @@ void term_init() {
   }
 }
 
+// Write a single char to the buffer.
+void term_write_char(const char *c) {
+  if (++term_col == VGA_WIDTH) {
+    term_row++;
+    term_col = 0;
+  }
+
+  // Scroll the terminal
+  if (term_row + 1 == VGA_HEIGHT) {
+    term_scroll(1);
+    term_row--;
+    term_col = 1;
+  }
+
+  if (*c == '\n') {
+    term_row++;
+    term_col = 0;
+  }
+
+  size_t term_pos = term_row * VGA_WIDTH + term_col;
+  term_buf[term_pos] = vga_entry(*c, VGA_COLOR_WHITE);
+}
+
 void term_write_color(const char *s, const uint8_t color) {
   size_t len = strlen(s);
   for (size_t i = 0; i < len; i++) {
@@ -125,12 +147,71 @@ void term_writeline(const char *s) {
   term_row++;
 }
 
-// Return the size of a string.
-static size_t strlen(const char *str) {
-  size_t len = 0;
-  while (str[len]) {
-    len++;
+enum format_specifier {
+  HEX = 0,
+  STRING = 1,
+  SIGNED = 2,
+  UNSIGNED = 3,
+};
+
+/// A single variable `term_write` function in the style of `printf`.
+void term_format(const char *s, void *ptr) {
+  char *start = NULL;
+  enum format_specifier f;
+
+  // Attempt to find %x.
+  start = strstr(s, "%x");
+  if (start) {
+    f = HEX;
+    goto write;
   }
 
-  return len;
+  // %s
+  start = strstr(s, "%s");
+  if (start) {
+    f = STRING;
+    goto write;
+  }
+
+  // %d
+  start = strstr(s, "%d");
+  if (start) {
+    f = SIGNED;
+    goto write;
+  }
+
+  // %u
+  start = strstr(s, "%u");
+  if (start) {
+    f = UNSIGNED;
+    goto write;
+  }
+
+  return;
+
+write:
+  while (s != start) {
+    term_write_char(s++);
+  }
+
+  if (f == HEX) {
+    char hex_digits[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                           '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+    unsigned int h = *(unsigned int *)ptr;
+
+    term_write("0x");
+    for (int i = 0; i < 8; i++) {
+      unsigned tmp = (h >> (4 * i)) & 0xF;
+      term_write_char(&hex_digits[tmp]);
+    }
+  } else if (f == STRING) {
+    term_write((const char *)ptr);
+  } else if (f == SIGNED) {
+    // TODO
+  } else if (f == UNSIGNED) {
+    // TODO
+  }
+
+  s += 2;
+  term_write(s);
 }

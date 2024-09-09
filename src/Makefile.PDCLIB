@@ -1,0 +1,64 @@
+CC=i686-elf-gcc
+AR=i686-elf-ar
+
+PDCLIB_SOURCES= functions/ctype/isalnum.c \
+     functions/ctype/isalpha.c \
+     functions/ctype/isblank.c \
+     functions/ctype/iscntrl.c \
+     functions/ctype/isdigit.c \
+     functions/ctype/isgraph.c \
+     functions/ctype/islower.c \
+     functions/ctype/isprint.c \
+     functions/ctype/ispunct.c \
+     functions/ctype/isspace.c \
+     functions/ctype/isupper.c \
+     functions/ctype/isxdigit.c \
+     functions/ctype/tolower.c \
+     functions/ctype/toupper.c \
+     functions/inttypes/imaxabs.c \
+     functions/inttypes/imaxdiv.c \
+     functions/inttypes/strtoimax.c \
+     functions/inttypes/strtoumax.c \
+     functions/string/memchr.c \
+     functions/string/memcmp.c \
+     functions/string/memcpy.c \
+     functions/string/memmove.c \
+     functions/string/memset.c \
+     functions/string/strcat.c \
+     functions/string/strchr.c \
+     functions/string/strcmp.c \
+     functions/string/strcoll.c \
+     functions/string/strcpy.c \
+     functions/string/strcspn.c \
+     functions/string/strerror.c \
+     functions/string/strlen.c \
+     functions/string/strncat.c \
+     functions/string/strncmp.c \
+     functions/string/strncpy.c \
+     functions/string/strpbrk.c \
+     functions/string/strrchr.c \
+     functions/string/strspn.c \
+     functions/string/strstr.c \
+     functions/string/strtok.c \
+     functions/string/strtok_s.c \
+     functions/string/strxfrm.c \
+     functions/string/memcpy_s.c \
+     functions/string/memmove_s.c \
+     functions/string/memset_s.c \
+     functions/string/strcat_s.c \
+     functions/string/strcpy_s.c \
+     functions/string/strerror_s.c \
+     functions/string/strerrorlen_s.c \
+     functions/string/strncat_s.c \
+     functions/string/strncpy_s.c
+
+.PHONY: libk.a
+
+libk.a: clean
+	$(CC) -c $(PDCLIB_SOURCES) -O2 -I include/
+	$(AR) rcs $@ *.o
+
+.PHONY: clean
+
+clean:
+	$(RM) *.o libk.a

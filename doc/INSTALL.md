@@ -60,6 +60,7 @@ Install QEMU:
 Running the kernel.
 
 ```
+ git submodule update --init --recursive
  cd src/
  make
  qemu-system-i386 -kernel kernel.bin
