@@ -51,8 +51,8 @@ void set_up_gdt(uint8_t *target) {
   // Set Present, ring 0 privelege, non-system, executable, non-conforming,
   // readable, and not-accessed bit fields
   kernel_code_segment.access_byte = 0b10011010;
-  // Set page granularity and long-mode bit fields
-  kernel_code_segment.flags = 0b1010;
+  // Set page granularity and size bit fields
+  kernel_code_segment.flags = 0b1100;
 
   kernel_data_segment.limit = 0xFFFFF;
   // Set Present, ring 0 privelege, non-system, non-executable, non-conforming,
@@ -65,8 +65,8 @@ void set_up_gdt(uint8_t *target) {
   // Set Present, ring 3 privelege, non-system, executable, non-conforming,
   // readable, and not-accessed bit fields
   user_code_segment.access_byte = 0b11111010;
-  // Set page granularity and long-mode bit fields
-  user_code_segment.flags = 0b1010;
+  // Set page granularity and size bit fields
+  user_code_segment.flags = 0b1100;
 
   user_data_segment.limit = 0xFFFFF;
   // Set Present, ring 3 privelege, non-system, non-executable, non-conforming,
