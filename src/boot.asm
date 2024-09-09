@@ -48,18 +48,26 @@ _start:
 ; TODO: Setup Paging here and any state that is needed before
 ; the kernel is loaded.
         ; Sets up gdt
+        ; Disable interrupts while setting up the GDT and paging
+        cli
+        ; First, set up the GDT descriptor,
+        ; which the CPU will use to find and interpret the GDT
         mov eax, gdt_descriptor
         mov ebx, gdt_base
+        ; The bottom 2 bytes of the GDT descriptor are the size in bytes of the GDT minus 1
         mov word [gdt_descriptor], 47
+        ; The top 4 bytes are the address of the GDT
         mov [gdt_descriptor + 2], ebx 
+        ; Push the address of the GDT to the stack for function call
         push ebx
         extern set_up_gdt
         call set_up_gdt
+        ; Once GDT is set up, lgdt with the GDT descriptor the set it
         lgdt [gdt_descriptor]
         ; TODO(Britton): Trying to reload cs fails on my machine,
         ; but in testing it was already set to 8.
         ; Figure out why it is not working to be sure we manually set it.
-        ; jmp 0x8:reload_cs
+        jmp 0x8:_start.reload_cs
         .reload_cs:
         mov ax, 0x10
         mov ds, ax
@@ -82,7 +90,9 @@ _start:
         mov eax, cr0
         or eax, 0x80000001
         mov cr0, eax
-
+        mov eax, cr0
+        ; re-enable interrupts
+        sti
 ; Enter the main kernel.
         extern kernel_main
         call kernel_main
