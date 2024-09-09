@@ -28,7 +28,7 @@ start: kernel.bin
 start-iso: kernel.iso
 	qemu-system-i386 -cdrom kernel.iso
 
-.PHONY: clean format libk.a
+.PHONY: clean format
 
 clean:
 	$(RM) *.o kernel.bin kernel.iso *.a
