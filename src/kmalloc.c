@@ -47,7 +47,9 @@ void *kmalloc(size_t size) {
 #ifdef DEBUG
       term_writeline("Free block found");
 #endif
-      return (void *)(size_t)current;
+      current->used = true;
+      return (void *)((size_t)current + sizeof(struct Block) + current->size);
     }
+    current = current->next;
   }
 }

@@ -96,6 +96,8 @@ _start:
         or eax, 0x80000001
         mov cr0, eax
         mov eax, cr0
+        pop eax
+        pop eax
         ; re-enable interrupts
         sti
 ; Enter the main kernel.

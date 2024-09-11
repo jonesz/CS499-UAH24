@@ -77,7 +77,30 @@ void term_init() {
 }
 
 void term_write_color(const char *s, const enum vga_color color) {
-=======
+  size_t len = strlen(s);
+  for (size_t i = 0; i < len; i++) {
+
+    if (++term_col == VGA_WIDTH) {
+      term_row++;
+      term_col = 0;
+    }
+    // Scroll the terminal
+    if (term_row + 1 == VGA_HEIGHT) {
+      term_scroll(1);
+      term_row--;
+      term_col = 1;
+    }
+
+    if (s[i] == '\n') {
+      term_row++;
+      term_col = 0;
+      continue;
+    }
+
+    size_t term_pos = term_row * VGA_WIDTH + term_col;
+    term_buf[term_pos] = vga_entry(s[i], color);
+  }
+}
 // Write a single char to the buffer.
 void term_write_char(const char *c) {
   if (++term_col == VGA_WIDTH) {

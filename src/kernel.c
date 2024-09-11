@@ -10,7 +10,7 @@ void kernel_main(multiboot_info_t *mbd, unsigned int magic) {
   term_writeline("Testing writeline");
   term_err("This is an error\n");
   term_warn("This is a warning\n");
-  
+
   /* Make sure the magic number matches for memory mapping*/
   if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
     term_err("invalid magic number!\n");
@@ -20,6 +20,12 @@ void kernel_main(multiboot_info_t *mbd, unsigned int magic) {
   if (!(mbd->flags >> 6 & 0x1)) {
     term_err("invalid memory map given by GRUB bootloader\n");
   }
+
+  term_format("This is a format string: %s.\n", "Hello");
+  unsigned int tmp = 0xFFFFAAAA;
+  void *loc = kernel_main;
+  term_format("This is a format string hex: %x\n", &tmp);
+  term_format("This is a format string hex: %x\n", &loc);
 
   /* Loop through the memory map and display the values */
   for (size_t i = 0; i < mbd->mmap_length;
