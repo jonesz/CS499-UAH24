@@ -51,5 +51,8 @@ void kernel_main(multiboot_info_t *mbd, unsigned int magic) {
     }
   }
 
-  int *test = kmalloc(sizeof(int));
+  for (size_t i = 0; i < 5; i++) {
+    int *tmp = kmalloc(sizeof(int));
+    term_format("tmp: %x\n", &tmp);
+  }
 }
