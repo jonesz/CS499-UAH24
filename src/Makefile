@@ -3,14 +3,14 @@ HDRS=term.h
 
 all: kernel.bin kernel.iso
 
-kernel.bin: kmalloc.o gdt.o boot.o kernel.o term.o $(HDRS)
+kernel.bin: kmalloc.o paging.o gdt.o boot.o kernel.o term.o $(HDRS) libk.a
 	$(CC) -T linker.ld -o $@ -ffreestanding -O2 -nostdlib $^ -lgcc
 
 boot.o: boot.asm
 	nasm -felf32 $^ -o $@
 
 %.o: %.c
-	$(CC) -c $< -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+	$(CC) -c $< -std=gnu99 -ffreestanding -O2 -Wall -Wextra -I include/
 
 kernel.iso: kernel.bin grub.cfg
 	mkdir -p build/
@@ -28,7 +28,7 @@ start-iso: kernel.iso
 .PHONY: clean format
 
 clean:
-	$(RM) *.o kernel.bin kernel.iso
+	$(RM) *.o kernel.bin kernel.iso *.a
 
 format:
 	clang-format -i *.c *.h

@@ -28,5 +28,8 @@ void term_writeline(const char *s);
 void term_write(const char *s);
 void term_err(const char *s);
 void term_warn(const char *s);
+void term_write_char(const char *c);
+
+void term_format(const char *s, void *ptr);
 
 #endif // TERM_H

@@ -10,7 +10,7 @@ void kernel_main(multiboot_info_t *mbd, unsigned int magic) {
   term_writeline("Testing writeline");
   term_err("This is an error\n");
   term_warn("This is a warning\n");
-
+  
   /* Make sure the magic number matches for memory mapping*/
   if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
     term_err("invalid magic number!\n");
