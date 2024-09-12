@@ -64,9 +64,6 @@ _start:
         call set_up_gdt
         ; Once GDT is set up, lgdt with the GDT descriptor the set it
         lgdt [gdt_descriptor]
-        ; TODO(Britton): Trying to reload cs fails on my machine,
-        ; but in testing it was already set to 8.
-        ; Figure out why it is not working to be sure we manually set it.
         jmp 0x8:_start.reload_cs
         .reload_cs:
         mov ax, 0x10
