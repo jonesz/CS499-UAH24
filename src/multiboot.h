@@ -27,16 +27,16 @@ struct _BootInformation {
 
   uint32_t vbe_control_info;
   uint32_t vbe_mode_info;
-  uint32_t vbe_mod;
-  uint32_t vbe_interface_seg;
-  uint32_t vbe_interface_off;
-  uint32_t vbe_interface_len;
+  uint16_t vbe_mode;
+  uint16_t vbe_interface_seg;
+  uint16_t vbe_interface_off;
+  uint16_t vbe_interface_len;
 
-  uint32_t framebuffer_addr;
+  uint64_t framebuffer_addr;
   uint32_t framebuffer_pitch;
   uint32_t framebuffer_width;
   uint32_t framebuffer_height;
-  uint32_t framebuffer_bpp;
-  uint32_t framebuffer_type;
-  uint32_t color_info;
+  uint8_t framebuffer_bpp;
+  uint8_t framebuffer_type;
+  uint8_t color_info[6];
 };
