@@ -39,7 +39,7 @@ typedef uint8_t PageFlags;
 
 // This pointer should only be accessible by kernel code,
 // and only works after init_paging has been executed successfully
-#define PAGE_DIRECTORY_POINTER ((PageDirectory*)0xFFFFF000)
+#define PAGE_DIRECTORY_POINTER ((PageDirectory *)0xFFFFF000)
 
 // These bit fields can be used to read/write data from a PD OR PT entry
 #define PAGE_PRESENT ((PageFlags)1)
@@ -58,7 +58,7 @@ typedef union _PageTableEntry PageTableEntry;
 typedef struct _MemInfo MemInfo;
 
 // Global variable
-static uint32_t* pages[Megabytes(1)];
+static uint32_t *pages[Megabytes(1)];
 static uint32_t page_alloc_index;
 
 // Global variable holds
@@ -124,41 +124,42 @@ void page_map_identity(PageDirectory *page_directory, PageTable *page_tables) {
       page_tables[dir_index].entries[table_index].entry =
           (dir_index << 22) | (table_index << 12) | flags;
     }
-
   }
 }
 
 // Initializes paging to be used by the operating system
 // Paging should be disabled during initialization
-void init_paging(MemInfo* mem_info, PageDirectory* page_directory) {
+void init_paging(MemInfo *mem_info, PageDirectory *page_directory) {
 
   // TODO(Britton): Use mem_info to identity page or otherwise smartly set up:
   // mmaped I/O, kernel memory, etc
 
   // Set The last page directory entry to point to the PD itself
   // This way, virtual addr 0xFFFFF000 points to the base of the PD
-  // Now, 0xFFFFF000 + i can be used to edit PD entries after setting up paging 
-  page_directory->entries[1023].entry = page_directory;
+  // Now, 0xFFFFF000 + i can be used to edit PD entries after setting up paging
+  page_directory->entries[1023].entry = (uint32_t)page_directory;
   page_directory->entries[1023].flags = PAGE_PRESENT | PAGE_ALLOW_WRITE;
 
   // Fill 'pages' with all available physical addresses of pages
-  for (int32_t i = 0; i < (sizeof(pages) / sizeof(pages[0])); i++) {
-    
-    // TODO(Britton): Use mem_info to determine which pages are unavailable
-    // For the rest, put an entry in pages
-    pages[i] = 0;
-  }
+  for (uint32_t i = 0; i < (sizeof(pages) / sizeof(pages[0])); i++) {
 
+    // TODO(Britton): Use mem_info to determine which pages are unavailable
+    // For the rest, put an entry in 'pages'
+    if (mem_info) {
+      pages[i] = 0;
+    }
+  }
 }
 
 /*
-* Begin paging API: should be usable by other parts of the kernel
-* TODO(Britton): Test all this
-*/
+ * Begin paging API: should be usable by other parts of the kernel
+ * TODO(Britton): Test all this
+ */
 
 // Returns the phys addr of one free page
-uint32_t* page_alloc() {
-  
+// and pops it from the list of free pages
+uint32_t *page_alloc() {
+
   // Check if there are any available pages
   // Zero should never be an allocatable phys addr
   // If page_alloc_index is greater than one megabyte,
@@ -167,7 +168,7 @@ uint32_t* page_alloc() {
     return 0;
   }
 
-  uint32_t* result = pages[page_alloc_index];
+  uint32_t *result = pages[page_alloc_index];
   pages[page_alloc_index] = 0;
   page_alloc_index--;
   return result;
@@ -176,33 +177,33 @@ uint32_t* page_alloc() {
 // Adds a page back to the list of available pages
 // Takes the physical address of a page
 // TODO(Britton): Consider security
-void page_free(uint32_t* phys_addr) {
+void page_free(uint32_t *phys_addr) {
   page_alloc_index++;
   pages[page_alloc_index] = phys_addr;
-  
 }
 
 // Adds a new userland, writable page table to the page directory
 // Returns the PD entry index of the new PT
 uint32_t page_table_alloc() {
 
-  uint32_t* pt_addr = page_alloc();
+  uint32_t *pt_addr = page_alloc();
   uint32_t pt_index = page_tables[pt_alloc_index];
   page_tables[pt_alloc_index] = 0;
   pt_alloc_index--;
-  PAGE_DIRECTORY_POINTER->entries[pt_index].entry = pt_addr;
-  PAGE_DIRECTORY_POINTER->entries[pt_index].flags = PAGE_PRESENT | PAGE_ALLOW_USER_ACCESS | PAGE_ALLOW_WRITE;
+  PAGE_DIRECTORY_POINTER->entries[pt_index].entry = (uint32_t)pt_addr;
+  PAGE_DIRECTORY_POINTER->entries[pt_index].flags =
+      PAGE_PRESENT | PAGE_ALLOW_USER_ACCESS | PAGE_ALLOW_WRITE;
   return pt_index;
-
 }
 
 // Frees a PT from the PD
 void page_table_free(uint32_t pt_index) {
 
-  PageDirectoryEntry* entry_to_free = &(PAGE_DIRECTORY_POINTER->entries[pt_index]);
-  uint32_t* phys_addr = entry_to_free->entry & 0xFFFFF000;
+  PageDirectoryEntry *entry_to_free =
+      &(PAGE_DIRECTORY_POINTER->entries[pt_index]);
+  uint32_t *phys_addr = (uint32_t *)((entry_to_free->entry) & 0xFFFFF000);
   page_free(phys_addr);
-  entry_to_free->entry = 0; 
+  entry_to_free->entry = 0;
   pt_alloc_index++;
   page_tables[pt_alloc_index] = pt_index;
 }
