@@ -12,7 +12,7 @@ rm -rf ext/*
 git submodule update --init --recursive
 ```
 
-You'll run this command to insert the compiler binaries into your path each time you want to do development.
+You'll run this command to insert the compiler binaries into your path each time you want to do development; run this in the root of the repo.
 
 ```
 export PATH=$PATH:$PWD/cross-prebuilt/gcc-14.2.0-nolibc/i386-linux/bin
