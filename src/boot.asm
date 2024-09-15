@@ -38,6 +38,15 @@ page_tables times 1024 * 1024 DD 0
 ; Bootloader jumps to this `_start` as specified by the linker.
 section .text
 
+isr:
+        cli ; Disable interrupts.
+        pushad
+        cld
+        call interrupt_handler
+        popad
+        sti ; renable interrupts.
+        iret
+        
 global _start:function (_start.end - _start)
 _start:
 
@@ -76,6 +85,10 @@ _start:
         mov gs, ax
         mov ss, ax
 
+        ; setup IDT.
+        extern setup_idt
+        call setup_idt
+        
         ; Set up identity Page tables
         ; TODO(Britton): Support non-identity paging
         mov eax, page_tables
