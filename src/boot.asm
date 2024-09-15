@@ -87,10 +87,6 @@ _start:
         mov gs, ax
         mov ss, ax
 
-        ; setup IDT.
-        extern setup_idt
-        call setup_idt
-        
         ; Set up identity Page tables
         ; TODO(Britton): Support non-identity paging
         mov eax, page_tables
@@ -107,6 +103,11 @@ _start:
         mov cr0, eax
         mov eax, cr0
         ; re-enable interrupts
+
+        ; setup IDT.
+        extern setup_idt
+        call setup_idt
+
         sti
 ; Enter the main kernel.
         extern kernel_main

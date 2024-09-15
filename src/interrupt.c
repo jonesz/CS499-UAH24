@@ -8,11 +8,12 @@
 #include "interrupt.h"
 #include "term.h"
 
+#define MAX_IDT_ENTRIES 256
 static void idt_set_descriptor(int idx, void *isr, uint8_t flags);
 
 extern void *isr;
 static idt_descriptor_t idt_desc;
-__attribute__((aligned(0x10))) static idt_gate_descriptor_t idt_table[256];
+__attribute__((aligned(0x10))) static idt_gate_descriptor_t idt_table[MAX_IDT_ENTRIES];
 
 void interrupt_handler() { term_write("Got an interrupt.\n"); }
 
@@ -20,7 +21,7 @@ void setup_idt() {
   idt_desc.offset = (uint32_t)&idt_table[0];
   idt_desc.size = (uint16_t)(sizeof(idt_gate_descriptor_t) * (255));
 
-  for (int i = 0; i < 256; i++) {
+  for (int i = 0; i < MAX_IDT_ENTRIES; i++) {
     idt_set_descriptor(i, isr, 0x8E);
   }
 
