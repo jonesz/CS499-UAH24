@@ -38,10 +38,12 @@ page_tables times 1024 * 1024 DD 0
 ; Bootloader jumps to this `_start` as specified by the linker.
 section .text
 
+global isr
 isr:
-        cli ; Disable interrupts.
+        cli ; disable interrupts.
         pushad
         cld
+        extern interrupt_handler
         call interrupt_handler
         popad
         sti ; renable interrupts.
