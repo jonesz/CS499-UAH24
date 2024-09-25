@@ -2,6 +2,7 @@
 .vscode/
 cross/
 *.o
+*.a
 /src/build
 src/kernel.bin
 src/kernel.iso

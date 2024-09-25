@@ -35,6 +35,8 @@ page_directory times 1024 DD 0
 align 4096
 page_tables times 1024 * 1024 DD 0
 
+;
+boot_info DD 0
 ; Bootloader jumps to this `_start` as specified by the linker.
 section .text
 
@@ -44,6 +46,14 @@ _start:
 ; We're within a 32-bit protected mode on x86. Zero interrupts,
 ; paging is disabled. Setup the stack.
         mov esp, stack_top
+
+; Save Grub's BootInfo pointer
+        ; TODO(Britton): For some reason, page_directory does not get 
+        ; popped from the stack before kernel_main gets called.
+        ; saving ebx into boot_info is a workaround that allows us
+        ; to still access the BootInformation structure.
+        ; We SHOULD be able to simply push ebx to stack here.
+        mov [boot_info], ebx
 
 ; TODO: Setup Paging here and any state that is needed before
 ; the kernel is loaded.
@@ -64,9 +74,6 @@ _start:
         call set_up_gdt
         ; Once GDT is set up, lgdt with the GDT descriptor the set it
         lgdt [gdt_descriptor]
-        ; TODO(Britton): Trying to reload cs fails on my machine,
-        ; but in testing it was already set to 8.
-        ; Figure out why it is not working to be sure we manually set it.
         jmp 0x8:_start.reload_cs
         .reload_cs:
         mov ax, 0x10
@@ -94,6 +101,8 @@ _start:
         ; re-enable interrupts
         sti
 ; Enter the main kernel.
+        mov ebx, [boot_info]
+        push ebx
         extern kernel_main
         call kernel_main
 
