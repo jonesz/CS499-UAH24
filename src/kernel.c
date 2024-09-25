@@ -2,6 +2,7 @@
 #include "kmalloc.h"
 #include "multiboot.h"
 #include "term.h"
+#include "test/test.h"
 #include <stddef.h>
 
 extern multiboot_info_t *boot_info;
@@ -20,4 +21,8 @@ void kernel_main() {
   term_format("This is a format string hex: %x\n", &loc);
   term_write((const char *)boot_info->cmdline);
   term_write("\n");
+
+  #ifndef RELEASE
+  test_all_functions();
+  #endif
 }
