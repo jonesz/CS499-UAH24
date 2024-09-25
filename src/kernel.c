@@ -1,8 +1,12 @@
 /** src/kernel.c */
+#include "kmalloc.h"
 #include "multiboot.h"
 #include "term.h"
+#include <stddef.h>
 
-void kernel_main(BootInformation *boot_info) {
+extern multiboot_info_t *boot_info;
+
+void kernel_main() {
   term_init();
   term_write("MiniOS Kernel Team #1\n");
   term_writeline("Testing writeline");
@@ -14,7 +18,6 @@ void kernel_main(BootInformation *boot_info) {
   void *loc = kernel_main;
   term_format("This is a format string hex: %x\n", &tmp);
   term_format("This is a format string hex: %x\n", &loc);
-  term_write((const char *)boot_info->cmd_line);
+  term_write((const char *)boot_info->cmdline);
   term_write("\n");
-
 }

@@ -3,11 +3,11 @@ HDRS=term.h
 
 all: kernel.bin kernel.iso
 
+kernel.bin: kmalloc.o paging.o gdt.o boot.o kernel.o term.o $(HDRS) libk.a
+	$(CC) -T linker.ld -o $@ -ffreestanding -O2 -nostdlib $^ -lgcc
+
 libk.a:
 	./build_libc.sh
-
-kernel.bin: paging.o gdt.o boot.o kernel.o term.o $(HDRS) libk.a
-	$(CC) -T linker.ld -o $@ -ffreestanding -O2 -nostdlib $^ -lgcc
 
 boot.o: boot.asm
 	nasm -felf32 $^ -o $@
