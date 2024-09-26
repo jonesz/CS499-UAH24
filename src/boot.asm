@@ -35,6 +35,10 @@ page_directory times 1024 DD 0
 align 4096
 page_tables times 1024 * 1024 DD 0
 
+global boot_info
+boot_info:
+        boot_info DD 0
+
 ; Bootloader jumps to this `_start` as specified by the linker.
 section .text
 
@@ -44,6 +48,9 @@ _start:
 ; We're within a 32-bit protected mode on x86. Zero interrupts,
 ; paging is disabled. Setup the stack.
         mov esp, stack_top
+
+; Save the boot information.
+        mov [boot_info], ebx
 
 ; TODO: Setup Paging here and any state that is needed before
 ; the kernel is loaded.
@@ -62,11 +69,9 @@ _start:
         push ebx
         extern set_up_gdt
         call set_up_gdt
+        pop ebx
         ; Once GDT is set up, lgdt with the GDT descriptor the set it
         lgdt [gdt_descriptor]
-        ; TODO(Britton): Trying to reload cs fails on my machine,
-        ; but in testing it was already set to 8.
-        ; Figure out why it is not working to be sure we manually set it.
         jmp 0x8:_start.reload_cs
         .reload_cs:
         mov ax, 0x10
@@ -91,6 +96,8 @@ _start:
         or eax, 0x80000001
         mov cr0, eax
         mov eax, cr0
+        pop eax
+        pop eax
         ; re-enable interrupts
         sti
 ; Enter the main kernel.
