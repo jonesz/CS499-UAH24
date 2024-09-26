@@ -1,5 +1,6 @@
 #include "test_kmalloc.h"
 
 int test_kmalloc() {
-  return 0;
+  // TODO: Actually test something here.
+  return 1;
 }
