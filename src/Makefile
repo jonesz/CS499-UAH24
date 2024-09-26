@@ -7,8 +7,7 @@ endif
 
 all: kernel.bin kernel.iso
 
-kernel.bin: kmalloc.o paging.o gdt.o boot.o kernel.o term.o test.o $(HDRS) libk.a
-	@echo $(DEF)
+kernel.bin: kmalloc.o paging.o gdt.o boot.o kernel.o term.o test.o test_kmalloc.o $(HDRS) libk.a
 	$(CC) -T linker.ld -o $@ -ffreestanding -O2 -nostdlib $^ -lgcc $(DEF)
 	
 libk.a:
