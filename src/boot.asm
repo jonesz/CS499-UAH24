@@ -105,6 +105,8 @@ _start:
         ; re-enable interrupts
 
         ; setup IDT.
+        mov eax, isr
+        push eax
         extern setup_idt
         call setup_idt
 
