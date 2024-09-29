@@ -199,7 +199,7 @@ write:
     unsigned int h = *(unsigned int *)ptr;
 
     term_write("0x");
-    for (int i = 0; i < 8; i++) {
+    for (int i = 7; i >= 0; i--) {
       unsigned tmp = (h >> (4 * i)) & 0xF;
       term_write_char(&hex_digits[tmp]);
     }

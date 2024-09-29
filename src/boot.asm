@@ -42,6 +42,17 @@ boot_info:
 ; Bootloader jumps to this `_start` as specified by the linker.
 section .text
 
+global isr
+isr:
+        cli ; disable interrupts.
+        pushad
+        cld
+        extern interrupt_handler
+        call interrupt_handler
+        popad
+        sti ; renable interrupts.
+        iret
+        
 global _start:function (_start.end - _start)
 _start:
 
@@ -99,6 +110,11 @@ _start:
         pop eax
         pop eax
         ; re-enable interrupts
+
+        ; setup IDT.
+        extern setup_idt
+        call setup_idt
+
         sti
 ; Enter the main kernel.
         extern kernel_main
