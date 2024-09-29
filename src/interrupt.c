@@ -13,7 +13,8 @@ static void idt_set_descriptor(int idx, void *isr, uint8_t flags);
 
 extern void *isr;
 static idt_descriptor_t idt_desc;
-__attribute__((aligned(0x10))) static idt_gate_descriptor_t idt_table[MAX_IDT_ENTRIES];
+__attribute__((
+    aligned(0x10))) static idt_gate_descriptor_t idt_table[MAX_IDT_ENTRIES];
 
 void interrupt_handler() { term_write("Got an interrupt.\n"); }
 

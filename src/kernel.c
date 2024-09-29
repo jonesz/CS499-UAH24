@@ -22,7 +22,7 @@ void kernel_main() {
   term_write((const char *)boot_info->cmdline);
   term_write("\n");
 
-  #ifndef RELEASE
+#ifndef RELEASE
   test_all_functions();
-  #endif
+#endif
 }

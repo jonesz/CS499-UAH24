@@ -11,12 +11,13 @@ struct Block {
   struct Block *next; // Next block in the list
 } Block;
 
-struct Block *root = NULL;  // Start of the memory
-size_t usedMemory = 0;      // Amount of memory we have used so far
+struct Block *root = NULL; // Start of the memory
+size_t usedMemory = 0;     // Amount of memory we have used so far
+size_t minSize = 8; // Minimum amout of memory to give (No idea a good value)
 size_t totalMemory = 10240; // To begin with we will assume that kmalloc is
                             // given X amount of memory to work with
 
-struct Block *kmallocNew(size_t size) {
+struct Block *newBlock(size_t size) {
   if (usedMemory >= totalMemory) {
 #ifdef DEBUG
     term_err("Out of usable memory\n");
@@ -25,19 +26,25 @@ struct Block *kmallocNew(size_t size) {
   }
 
   size_t blockSize = size; // Testing value I have no idea what a good value is
-  struct Block *block = (struct Block *)(usedMemory + blockSize);
+  struct Block *block = (struct Block *)(usedMemory + 1);
   block->size = blockSize;
   block->used = false;
   block->next = NULL;
 
   usedMemory += block->size + sizeof(struct Block);
 
+#ifdef DEBUG
+  term_format("New block created at: %x\n", &block);
+#endif
+
   return block;
 }
 
 void *kmalloc(size_t size) {
+  if (size < minSize)
+    size = minSize;
   if (root == NULL) {
-    root = kmallocNew(size);
+    root = newBlock(size);
     if (root == NULL) {
 #ifdef DEBUG
       term_err("kmalloc did not initialize\n");
@@ -48,28 +55,25 @@ void *kmalloc(size_t size) {
     term_write_color("kmalloc initialized\n", VGA_COLOR_GREEN);
 #endif
   }
-
   struct Block *current = root;
   while (current != NULL) {
     if (!current->used) {
 #ifdef DEBUG
       term_writeline("Free block found");
-      size_t *output;
-      *output = usedMemory;
-      term_format("Total used memory so far: %x\n", output);
+      term_format("Total used memory so far: %x\n", &usedMemory);
 #endif
       current->used = true;
       return (void *)((size_t)current + sizeof(struct Block));
     }
     if (current->next == NULL) {
-      current->next = kmallocNew(size);
+      current->next = newBlock(size);
     }
     current = current->next;
   }
   return NULL; // Out of memory
 }
 
-void free(void *ptr) {
+void kfree(void *ptr) {
   if (root == NULL) {
 #ifdef DEBUG
     term_err("kmalloc has not been initialized yet\n");
