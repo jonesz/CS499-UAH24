@@ -27,7 +27,7 @@ typedef struct idt_gate_descriptor {
   uint16_t offset_2; // 48..63
 } __attribute__((packed)) idt_gate_descriptor_t;
 
-void setup_idt();
+void setup_idt(void *isr_in);
 void interrupt_handler();
 
 #endif // INTERRUPT_H

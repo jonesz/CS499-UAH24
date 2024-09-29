@@ -25,4 +25,6 @@ void kernel_main() {
   #ifndef RELEASE
   test_all_functions();
   #endif
+
+  __asm__("int $0");
 }
