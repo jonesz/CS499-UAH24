@@ -13,4 +13,5 @@ void kernel_main() {
   void *loc = kernel_main;
   term_format("This is a format string hex: %x\n", &tmp);
   term_format("This is a format string hex: %x\n", &loc);
+  __asm__("int $0");
 }
