@@ -18,12 +18,12 @@ __attribute__((
 
 void interrupt_handler() { term_write("Got an interrupt.\n"); }
 
-void setup_idt() {
+void setup_idt(void *isr_in) {
   idt_desc.offset = (uint32_t)&idt_table[0];
-  idt_desc.size = (uint16_t)(sizeof(idt_gate_descriptor_t) * (255));
+  idt_desc.size = (uint16_t)(sizeof(idt_gate_descriptor_t) * (255) - 1);
 
   for (int i = 0; i < MAX_IDT_ENTRIES; i++) {
-    idt_set_descriptor(i, isr, 0x8E);
+    idt_set_descriptor(i, isr_in, 0x8E);
   }
 
   __asm__ volatile("lidt %0" : : "m"(idt_desc));
