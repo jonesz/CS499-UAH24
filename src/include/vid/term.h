@@ -23,7 +23,7 @@ enum vga_color {
 };
 
 void term_init();
-void term_write_color(const char *s, const uint8_t color);
+void term_write_color(const char *s, const enum vga_color);
 void term_writeline(const char *s);
 void term_write(const char *s);
 void term_err(const char *s);

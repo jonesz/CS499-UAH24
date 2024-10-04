@@ -1,3 +1,6 @@
+CC=i686-elf-gcc
+AR=i686-elf-ar
+
 INCLUDE = -I../include/
 OBJECT = term.o
 TARGET = libvid.a
@@ -8,7 +11,8 @@ $(TARGET): $(OBJECT)
 	$(AR) rcs $@ $^
 
 %.o : %.c
-	$(CC) -o $@ $^ $(INCLUDE) -c
+	$(CC) -o $@ $^ $(INCLUDE) -c -ffreestanding -O2 -nostdlib -lgcc -g
+
 
 .PHONY: clean format
 

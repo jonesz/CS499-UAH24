@@ -1,26 +1,33 @@
 CC=i686-elf-gcc
-HDRS=term.h interrupt.h
 
 ifdef RELEASE
 	DEF="-D RELEASE"
 endif
 
 all: kernel.bin kernel.iso
-
-kernel.bin: kmalloc.o paging.o gdt.o boot.o kernel.o term.o interrupt.o test.o test_kmalloc.o $(HDRS) libk.a
+	
+kernel.bin: boot.o kernel.o mem/libmem.a interrupt/libinterrupt.a vid/libvid.a test/libtest.a libk.a
 	$(CC) -T linker.ld -o $@ -ffreestanding -O2 -nostdlib $^ -lgcc $(DEF)
+
+.PHONY: mem/libmem.a vid/libvid.a interrupt/libinterrupt.a test/libtest.a
+
+mem/libmem.a:
+	+$(MAKE) -C mem
+
+vid/libvid.a:
+	+$(MAKE) -C vid
+	
+interrupt/libinterrupt.a:
+	+$(MAKE) -C interrupt
+
+test/libtest.a:
+	+$(MAKE) -C test
 	
 libk.a:
 	./build_libc.sh
 
 %.o: %.asm
 	nasm -felf32 $^ -o $@
-
-%.o: test/%.c
-	$(CC) -c $< -std=gnu99 -ffreestanding -O2 -Wall -Wextra -I include/ $(DEF)
-
-%.o: %.c
-	$(CC) -c $< -std=gnu99 -ffreestanding -O2 -Wall -Wextra -I include/ $(DEF)
 
 kernel.iso: kernel.bin grub.cfg
 	mkdir -p build/
@@ -38,7 +45,13 @@ start-iso: kernel.iso
 .PHONY: clean format
 
 clean:
-	$(RM) *.o kernel.bin kernel.iso *.a
+	+$(MAKE) -C interrupt clean
+	+$(MAKE) -C mem clean
+	+$(MAKE) -C vid clean
+	+$(MAKE) -C test clean
 
 format:
-	clang-format -i *.c *.h
+	+$(MAKE) -C interrupt format
+	+$(MAKE) -C mem format
+	+$(MAKE) -C vid format
+	+$(MAKE) -C test format
