@@ -4,6 +4,6 @@
 #include <stddef.h>
 
 void *kmalloc(size_t size);
-void free(void *ptr);
+void kfree(void *ptr);
 
 #endif // KMALLOC_H
