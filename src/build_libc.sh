@@ -7,4 +7,4 @@ make
 cp libk.a $SRC/
 
 mkdir -p $SRC/include
-cp -r include/* $SRC/include
+cp -r include/ $SRC/include/libc
