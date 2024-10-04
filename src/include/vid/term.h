@@ -1,5 +1,5 @@
-#ifndef TERM_H
-#define TERM_H
+#ifndef VID_TERM_H
+#define VID_TERM_H
 
 #include <stdint.h>
 
