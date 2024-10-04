@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include "vid/term.h"
 
 // VGA text mode buffer base pointer
 #define VGA_TEXT_MODE_BUFFER (uint16_t *)0xB8000
