@@ -4,7 +4,7 @@
  */
 #include <stddef.h>
 #include <stdint.h>
-#include <string.h>
+#include "libc/string.h"
 #include "vid/term.h"
 
 // VGA text mode buffer base pointer
