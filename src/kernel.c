@@ -1,5 +1,7 @@
 /** src/kernel.c */
 #include "acpi.h"
+#include "asm_tools.h"
+#include "interrupt.h"
 #include "kmalloc.h"
 #include "multiboot.h"
 #include "term.h"
@@ -64,10 +66,11 @@ void kernel_main() {
   }
   sum = 0;
 
-  // After verifying the RSDT, move on to the actual FADT to check for a serial controller
+  // After verifying the RSDT, move on to the actual FADT to check for a serial
+  // controller
   FADT *fadt = (FADT *)rsdt->PointerToOtherSDT;
-  // Signature 'FADT' (non-null-termianted, ignore trailing characters) shows if we are
-  // At the correct table
+  // Signature 'FADT' (non-null-termianted, ignore trailing characters) shows if
+  // we are At the correct table
   term_format("%s\n", fadt->h.Signature);
   for (size_t i = 0; i < fadt->h.Length; i++) {
     sum += *(uint8_t *)((uint8_t *)fadt + i);
@@ -78,13 +81,24 @@ void kernel_main() {
     return;
   }
 
-  /* NOTE(BP): BootArchitectureFlags should tell us if a serial controller exists
-  As a double check, The value should be at offset 109 according to this page
-  https://wiki.osdev.org/%228042%22_PS/2_Controller#Step_2:_Determine_if_the_PS/2_Controller_Exists  // 
-  These are off by what appears to be one byte,
-  but the relevant flag is zero either way on my machine.
-  So, it seems that there is no serial controller for I/O
+  /* NOTE(BP): BootArchitectureFlags should tell us if a serial controller
+  exists As a double check, The value should be at offset 109 according to this
+  page
+  https://wiki.osdev.org/%228042%22_PS/2_Controller#Step_2:_Determine_if_the_PS/2_Controller_Exists
+  // These are off by what appears to be one byte, but the relevant flag is zero
+  either way on my machine. So, it seems that there is no serial controller for
+  I/O
   */
   term_format("BAF: %x\n", &(fadt->BootArchitectureFlags));
   term_format("BAF (DOUBLE CHECK): %x\n", (uint8_t *)(fadt) + 109);
+
+  for (size_t i = 0; i < (rsdt->h.Length - sizeof(rsdt->h)) / 4; i++) {
+    term_format("Table: %s\n", *((uint32_t **)&(rsdt->PointerToOtherSDT) + i));
+  }
+
+  init_pic();
+
+  while (1) {
+    asm("nop");
+  }
 }

@@ -52,7 +52,27 @@ isr:
         popad
         sti ; renable interrupts.
         iret
-        
+
+global iskey_isr
+key_isr:
+        cli ; disable interrupts.
+        pushad
+
+        ; Read scan code from keyboard
+        in al,0x60   
+        push eax
+        cld
+        extern key_handler
+        call key_handler
+        pop eax
+        ; Tell PIC that the interrupt has ended
+        mov al, 0x20
+        out 0x20, al
+
+        popad
+        sti ; renable interrupts.
+        iret
+
 global _start:function (_start.end - _start)
 _start:
 
@@ -112,6 +132,8 @@ _start:
         ; re-enable interrupts
 
         ; setup IDT.
+        mov eax, key_isr
+        push eax
         mov eax, isr
         push eax
         extern setup_idt
