@@ -51,28 +51,28 @@ static void idt_set_descriptor(int idx, void *isr, uint8_t flags) {
 // https://wiki.osdev.org/8259_PIC
 void init_pic() {
   // ICW1
-  //term_write("Issue ICW1\n");
+  // term_write("Issue ICW1\n");
   outb(MPIC_CMD, ICW1_INIT | ICW1_ICW4);
   io_wait();
   outb(SPIC_CMD, ICW1_INIT | ICW1_ICW4);
   io_wait();
 
   // ICW2
-  //term_write("Issue ICW2\n");
+  // term_write("Issue ICW2\n");
   outb(MPIC_DAT, 0x20);
   io_wait();
   outb(SPIC_DAT, 0x28);
   io_wait();
 
   // ICW3
-  //term_write("Issue ICW3\n");
+  // term_write("Issue ICW3\n");
   outb(MPIC_DAT, 4);
   io_wait();
   outb(SPIC_DAT, 2);
   io_wait();
 
   // ICW4
-  //term_write("Issue ICW4\n");
+  // term_write("Issue ICW4\n");
   outb(MPIC_DAT, ICW4_8086);
   io_wait();
   outb(SPIC_DAT, ICW4_8086);

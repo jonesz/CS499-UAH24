@@ -11,7 +11,7 @@ int test_all_functions() {
   term_write("All tests passed!\n");
   return 0;
 
-  err:
+err:
   term_write("Test failed!");
   return 0;
 }
