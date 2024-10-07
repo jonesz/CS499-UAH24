@@ -1,6 +1,6 @@
-#include "test.h"
-#include "test_kmalloc.h"
-#include "../term.h" // TODO: this include path is horrendous; fix.
+#include "test/test.h"
+#include "test/test_kmalloc.h"
+#include "vid/term.h"
 
 int test_all_functions() {
   term_write("Testing kmalloc... ");

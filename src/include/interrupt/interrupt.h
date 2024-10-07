@@ -1,5 +1,5 @@
-#ifndef INTERRUPT_H
-#define INTERRUPT_H
+#ifndef INTERRUPT_INTERRUPT_H
+#define INTERRUPT_INTERRUPT_H
 #include <stdint.h>
 
 #define GATE_TYPE_TASK_GATE 0x5
@@ -30,4 +30,4 @@ typedef struct idt_gate_descriptor {
 void setup_idt(void *isr_in);
 void interrupt_handler();
 
-#endif // INTERRUPT_H
+#endif // INTERRUPT_INTERRUPT_H

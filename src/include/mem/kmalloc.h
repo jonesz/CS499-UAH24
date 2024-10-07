@@ -1,5 +1,5 @@
-#ifndef KMALLOC_H
-#define KMALLOC_H
+#ifndef MEM_KMALLOC_H
+#define MEM_KMALLOC_H
 
 #include <stddef.h>
 

@@ -1,7 +1,7 @@
 /** src/kernel.c */
-#include "kmalloc.h"
-#include "multiboot.h"
-#include "term.h"
+#include "mem/kmalloc.h"
+#include "mem/multiboot.h"
+#include "vid/term.h"
 #include "test/test.h"
 #include <stddef.h>
 

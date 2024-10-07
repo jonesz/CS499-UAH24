@@ -1,4 +1,4 @@
-#include "test_kmalloc.h"
+#include "test/test_kmalloc.h"
 
 int test_kmalloc() {
   // TODO: Actually test something here.

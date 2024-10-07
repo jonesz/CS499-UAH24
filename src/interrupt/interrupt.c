@@ -5,8 +5,8 @@
  * Ethan Jones <erj0005@uah.edu>.
  */
 
-#include "interrupt.h"
-#include "term.h"
+#include "interrupt/interrupt.h"
+#include "vid/term.h"
 
 #define MAX_IDT_ENTRIES 256
 static void idt_set_descriptor(int idx, void *isr, uint8_t flags);

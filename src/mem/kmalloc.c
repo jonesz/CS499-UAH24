@@ -1,5 +1,5 @@
-#include "kmalloc.h"
-#include "term.h"
+#include "mem/kmalloc.h"
+#include "vid/term.h"
 #include <stdbool.h>
 #include <stddef.h>
 
