@@ -54,6 +54,7 @@ clean:
 	+$(MAKE) -C mem clean
 	+$(MAKE) -C vid clean
 	+$(MAKE) -C test clean
+	$(RM) *.o *.iso *.bin
 
 format:
 	+$(MAKE) -C interrupt format
