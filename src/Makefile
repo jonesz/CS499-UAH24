@@ -4,10 +4,12 @@ ifdef RELEASE
 	DEF="-D RELEASE"
 endif
 
+INCLUDE=include/
+
 all: kernel.bin kernel.iso
 	
 kernel.bin: boot.o kernel.o mem/libmem.a interrupt/libinterrupt.a vid/libvid.a test/libtest.a libk.a
-	$(CC) -T linker.ld -o $@ -ffreestanding -O2 -nostdlib $^ -lgcc $(DEF)
+	$(CC) -T linker.ld -o $@ -ffreestanding -O2 -nostdlib $^ -lgcc $(DEF) -I$(INCLUDE)
 
 .PHONY: mem/libmem.a vid/libvid.a interrupt/libinterrupt.a test/libtest.a
 
@@ -25,6 +27,9 @@ test/libtest.a:
 	
 libk.a:
 	./build_libc.sh
+
+%.o: %.c
+	$(CC) -c -o $@ -ffreestanding -O2 -nostdlib $^ -lgcc $(DEF) -I$(INCLUDE)
 
 %.o: %.asm
 	nasm -felf32 $^ -o $@
