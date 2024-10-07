@@ -8,4 +8,5 @@ cp libk.a $SRC/
 
 mkdir -p $SRC/include
 cp -r include/* $SRC/include/libc
+rm -rf $SRC/include/pdclib
 mv $SRC/include/libc/pdclib $SRC/include
