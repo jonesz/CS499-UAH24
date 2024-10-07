@@ -2,7 +2,7 @@ CC=i686-elf-gcc
 AR=i686-elf-ar
 
 INCLUDE = -I../include/
-OBJECT = interrupt.o
+OBJECT = interrupt.o isrs.meta.o
 TARGET = libinterrupt.a
 
 all: $(TARGET)
@@ -12,6 +12,9 @@ $(TARGET): $(OBJECT)
 
 %.o : %.c
 	$(CC) -o $@ $^ $(INCLUDE) -c -ffreestanding -O2 -nostdlib -lgcc -g
+
+%.o: %.asm
+	nasm -felf32 $^ -o $@
 
 .PHONY: clean format
 

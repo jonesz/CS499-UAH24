@@ -42,37 +42,6 @@ boot_info:
 ; Bootloader jumps to this `_start` as specified by the linker.
 section .text
 
-global isr
-isr:
-        cli ; disable interrupts.
-        pushad
-        cld
-        extern interrupt_handler
-        call interrupt_handler
-        popad
-        sti ; renable interrupts.
-        iret
-
-global iskey_isr
-key_isr:
-        cli ; disable interrupts.
-        pushad
-
-        ; Read scan code from keyboard
-        in al,0x60   
-        push eax
-        cld
-        extern key_handler
-        call key_handler
-        pop eax
-        ; Tell PIC that the interrupt has ended
-        mov al, 0x20
-        out 0x20, al
-
-        popad
-        sti ; renable interrupts.
-        iret
-
 global _start:function (_start.end - _start)
 _start:
 
@@ -132,9 +101,11 @@ _start:
         ; re-enable interrupts
 
         ; setup IDT.
-        mov eax, key_isr
+        extern isr0
+        extern isr1
+        mov eax, isr1
         push eax
-        mov eax, isr
+        mov eax, isr0
         push eax
         extern setup_idt
         call setup_idt

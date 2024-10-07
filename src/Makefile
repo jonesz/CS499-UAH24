@@ -6,8 +6,8 @@ endif
 
 INCLUDE=include/
 
-all: kernel.bin kernel.iso
-	
+all: metas kernel.bin kernel.iso
+
 kernel.bin: boot.o kernel.o mem/libmem.a interrupt/libinterrupt.a vid/libvid.a test/libtest.a libk.a
 	$(CC) -T linker.ld -o $@ -ffreestanding -O2 -nostdlib $^ -lgcc $(DEF) -I$(INCLUDE)
 
@@ -47,16 +47,20 @@ start: kernel.bin
 start-iso: kernel.iso
 	qemu-system-i386 -cdrom kernel.iso
 
-.PHONY: clean format
+.PHONY: metas clean format
 
+metas: 
+	+$(MAKE) -C meta
 clean:
+	+$(MAKE) -C meta clean
 	+$(MAKE) -C interrupt clean
 	+$(MAKE) -C mem clean
 	+$(MAKE) -C vid clean
 	+$(MAKE) -C test clean
-	$(RM) *.o *.iso *.bin
+	$(RM) *.o *.a *.iso *.bin
 
 format:
+	+$(MAKE) -C meta format
 	+$(MAKE) -C interrupt format
 	+$(MAKE) -C mem format
 	+$(MAKE) -C vid format

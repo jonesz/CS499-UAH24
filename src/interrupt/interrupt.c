@@ -17,23 +17,35 @@ static idt_descriptor_t idt_desc;
 __attribute__((
     aligned(0x10))) static idt_gate_descriptor_t idt_table[MAX_IDT_ENTRIES];
 
-void interrupt_handler() { term_write("Got an interrupt.\n"); }
+void interrupt_handler(uint32_t int_num) {
 
-void key_handler(uint32_t scan_code) {
-  term_format("Key Interrupt %x\n", &scan_code);
+  switch (int_num) {
+  case 0x20 + 1: {
+    key_handler(int_num);
+  } break;
+
+  default: {
+    term_format("Got interrupt %x.\n", &int_num);
+  }
+  }
 }
 
-void setup_idt(void *isr_in, void *key_isr) {
+void key_handler(uint32_t int_num) {
+
+  // TODO(BP): All keyboard I/O should go through a driver
+  // Get scan code from keyboard
+  uint32_t scan_code = inb(0x60);
+  term_format("Key Interrupt %x\n", &scan_code);
+  // Tell PIC that the IRQ was handled
+  outb(MPIC_CMD, 0x20);
+}
+
+void setup_idt(void *isr0, void *isr1) {
   idt_desc.offset = (uint32_t)&idt_table[0];
   idt_desc.size = (uint16_t)(sizeof(idt_gate_descriptor_t) * (255) - 1);
-
+  int isr_len = isr1 - isr0;
   for (int i = 0; i < MAX_IDT_ENTRIES; i++) {
-
-    if (i == (0x1F + 2)) {
-      idt_set_descriptor(i, key_isr, 0x8E);
-    } else {
-      idt_set_descriptor(i, isr_in, 0x8E);
-    }
+    idt_set_descriptor(i, isr0 + i * isr_len, 0x8E);
   }
 
   __asm__ volatile("lidt %0" : : "m"(idt_desc));
