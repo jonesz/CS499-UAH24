@@ -7,6 +7,7 @@
 
 #include "interrupt/interrupt.h"
 #include "interrupt/asm_tools.h"
+#include "interrupt/isr.h"
 #include "vid/term.h"
 
 #define MAX_IDT_ENTRIES 256
@@ -20,7 +21,7 @@ __attribute__((
 void interrupt_handler(uint32_t int_num) {
 
   switch (int_num) {
-  case 0x20 + 1: {
+  case KEYBOARD_ISR: {
     key_handler(int_num);
   } break;
 
