@@ -1,5 +1,5 @@
-; Rather than rewrite a bunch of ISRs; push an OpCode to the handler telling it which interrupt we've
-; encountered.
+; Rather than rewrite a bunch of ISRs in assembly, push an OpCode to the handler 
+; telling it which interrupt we've encountered.
 
 %macro isr 1
 global isr%1
