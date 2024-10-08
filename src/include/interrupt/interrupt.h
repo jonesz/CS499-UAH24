@@ -51,7 +51,7 @@ typedef struct idt_gate_descriptor {
 } __attribute__((packed)) idt_gate_descriptor_t;
 
 void setup_idt(void *isr_in, void *key_isr);
-void interrupt_handler();
+void interrupt_handler(uint32_t int_num);
 void init_pic();
 void key_handler(uint32_t scan_code);
 
