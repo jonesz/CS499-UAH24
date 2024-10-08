@@ -2,7 +2,8 @@
 ; encountered.
 
 %macro isr 1
-global isr_%1:
+global isr%1
+isr%1:
         cli
         pushad
         mov eax, %1

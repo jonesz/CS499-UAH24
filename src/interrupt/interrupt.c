@@ -19,7 +19,6 @@ __attribute__((
     aligned(0x10))) static idt_gate_descriptor_t idt_table[MAX_IDT_ENTRIES];
 
 void interrupt_handler(uint32_t int_num) {
-
   switch (int_num) {
   case KEYBOARD_ISR: {
     key_handler(int_num);
@@ -44,8 +43,12 @@ void key_handler(uint32_t int_num) {
 void setup_idt(void *isr0, void *isr1) {
   idt_desc.offset = (uint32_t)&idt_table[0];
   idt_desc.size = (uint16_t)(sizeof(idt_gate_descriptor_t) * (255) - 1);
+  // The ISR length is uniform, so we can calculate the next isr address via offset: see below.
   int isr_len = isr1 - isr0;
   for (int i = 0; i < MAX_IDT_ENTRIES; i++) {
+    // TODO: This isn't safe at all and is ghetto as hell -- relying on the compiler to lay certain
+    // .text in a certain way is stupid; moreover, making ISR size non-uniform will break this without
+    // making a sound. The more intelligent way is to just pass an arr of 256 addresses.
     idt_set_descriptor(i, isr0 + i * isr_len, 0x8E);
   }
 
