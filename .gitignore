@@ -6,3 +6,5 @@ cross/
 /src/build
 src/kernel.bin
 src/kernel.iso
+src/meta/bin/*
+*.meta.*
