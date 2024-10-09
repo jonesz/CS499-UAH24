@@ -2,10 +2,10 @@
  * TODO: A good bit of this file was taken off OSDev barebones, thus it should
  * be rewritten to some degree.
  */
-#include "vid/term.h"
-#include "libc/string.h"
 #include <stddef.h>
 #include <stdint.h>
+#include "libc/string.h"
+#include "vid/term.h"
 
 // VGA text mode buffer base pointer
 #define VGA_TEXT_MODE_BUFFER (uint16_t *)0xB8000
