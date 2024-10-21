@@ -10,8 +10,13 @@
 #include "interrupt/isr.h"
 #include "vid/term.h"
 
+// TODO: At some point, this should be shared mem between the scheduler and the timer.
+uint32_t counter = 0;
+
 #define MAX_IDT_ENTRIES 256
 static void idt_set_descriptor(int idx, void *isr, uint8_t flags);
+static void key_handler(uint32_t int_num);
+static void timer_handler();
 
 extern void *isr;
 static idt_descriptor_t idt_desc;
@@ -23,6 +28,10 @@ void interrupt_handler(uint32_t int_num) {
   case KEYBOARD_ISR: {
     key_handler(int_num);
   } break;
+
+  case TIMER_ISR:
+     timer_handler();
+     break;
 
   default: {
     term_format("Got interrupt %x.\n", &int_num);
@@ -40,15 +49,22 @@ void key_handler(uint32_t int_num) {
   outb(MPIC_CMD, 0x20);
 }
 
+void timer_handler() {
+  counter += 1;
+  outb(MPIC_CMD, 0x20);
+}
+
 void setup_idt(void *isr0, void *isr1) {
   idt_desc.offset = (uint32_t)&idt_table[0];
   idt_desc.size = (uint16_t)(sizeof(idt_gate_descriptor_t) * (255) - 1);
-  // The ISR length is uniform, so we can calculate the next isr address via offset: see below.
+  // The ISR length is uniform, so we can calculate the next isr address via
+  // offset: see below.
   int isr_len = isr1 - isr0;
   for (int i = 0; i < MAX_IDT_ENTRIES; i++) {
-    // TODO: This isn't safe at all and is ghetto as hell -- relying on the compiler to lay certain
-    // .text in a certain way is stupid; moreover, making ISR size non-uniform will break this without
-    // making a sound. The more intelligent way is to just pass an arr of 256 addresses.
+    // TODO: This isn't safe at all and is ghetto as hell -- relying on the
+    // compiler to lay certain .text in a certain way is stupid; moreover,
+    // making ISR size non-uniform will break this without making a sound. The
+    // more intelligent way is to just pass an arr of 256 addresses.
     idt_set_descriptor(i, isr0 + i * isr_len, 0x8E);
   }
 
@@ -98,7 +114,7 @@ void init_pic() {
   // NOTE(BP): The mask I currently set only disables timer interrupts,
   // In my testing the timer was spamming interrupts and causing a headache,
   // So this will need to be changed when we actually want to use the timer.
-  outb(MPIC_DAT, 0x1);
+  outb(MPIC_DAT, 0x0);
   outb(SPIC_DAT, 0x0);
   io_wait();
 }
