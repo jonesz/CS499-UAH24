@@ -2,5 +2,6 @@
 #define INTERRUPT_ISR_H
 
 #define KEYBOARD_ISR 0x21
+#define TIMER_ISR 0x20
 
 #endif // INTERRUPT_ISR_H
