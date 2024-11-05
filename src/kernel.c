@@ -1,5 +1,6 @@
 /** src/kernel.c */
 #include "mem/kmalloc.h"
+#include "mem/buddy_alloc.h"
 #include "mem/multiboot.h"
 #include "vid/term.h"
 #include "interrupt/acpi.h"
@@ -96,6 +97,8 @@ void kernel_main() {
     term_format("Table: %s\n", *((uint32_t **)&(rsdt->PointerToOtherSDT) + i));
   }
 
+  // TODO: What portion of the mem should the kernel heap be? Think of higher half stuff here.
+  buddy_alloc_init(600000, 800000);
   init_pic();
 
   while (1) {

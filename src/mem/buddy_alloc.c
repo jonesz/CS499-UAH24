@@ -23,9 +23,7 @@ void buddy_alloc_init(uint32_t addr_beg, uint32_t addr_end) {
   allocator.right = NULL;
 }
 
-void *buddy_alloc(size_t sz) {
-  return _internal_alloc(&allocator, sz);
-}
+void *buddy_alloc(size_t sz) { return _internal_alloc(&allocator, sz); }
 
 void *_internal_alloc(block_t *allocator, size_t sz) {
   // If the block is already allocated, return NULL.
@@ -56,23 +54,39 @@ void *_internal_alloc(block_t *allocator, size_t sz) {
   }
 
   // Attempt to split the block into two...
-  if ((mem_available / 2) - (sizeof(block_t) * 2) > sz) {
-    return NULL; // TODO
+  // HDR |               MEM
+  // HDR (LEFT: HDR | MEM) (RIGHT: HDR | MEM)
+  if (allocator->left == NULL && allocator->right == NULL &&
+      ((mem_available / 2) - (sizeof(block_t) * 2) > sz)) {
+    allocator->left = (block_t *)allocator->addr_beg;
+    allocator->left->addr_beg = allocator->addr_beg + sizeof(block_t);
+    allocator->left->addr_end =
+        allocator->left->addr_beg + ((mem_available / 2) - sizeof(block_t));
+    allocator->left->alloc = 0;
+    allocator->left->left = NULL;
+    allocator->left->right = NULL;
+
+    allocator->right = (block_t *)allocator->left->addr_end;
+    allocator->right->addr_beg = allocator->left->addr_end + sizeof(block_t);
+    allocator->right->addr_end = allocator->addr_end;
+    allocator->right->alloc = 0;
+    allocator->right->left = NULL;
+    allocator->right->right = NULL;
+
+    return _internal_alloc(allocator->left, sz);
   } else {
     allocator->alloc = 1;
     return (void *)allocator->addr_beg;
   }
 }
 
-void buddy_alloc_free(void *ptr) {
-  _internal_free(&allocator, ptr);
-}
+void buddy_alloc_free(void *ptr) { _internal_free(&allocator, ptr); }
 
 void _internal_free(block_t *allocator, void *ptr) {
   if (allocator->addr_beg == (uint32_t)ptr) {
     allocator->alloc = 0;
     return;
-  }     
+  }
 
   if (allocator->left != NULL && allocator->right != NULL) {
     _internal_free(allocator->left, ptr);
