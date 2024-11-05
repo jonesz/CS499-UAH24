@@ -2,7 +2,7 @@ CC=i686-elf-gcc
 AR=i686-elf-ar
 
 INCLUDE = -I../include/
-OBJECT = gdt.o paging.o kmalloc.o
+OBJECT = gdt.o paging.o kmalloc.o buddy_alloc.o
 TARGET = libmem.a
 
 all: $(TARGET)
