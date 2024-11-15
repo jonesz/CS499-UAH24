@@ -27,12 +27,6 @@ void kernel_main() {
   term_write((const char *)boot_info->cmdline);
   term_write("\n");
 
-#ifndef RELEASE
-  test_all_functions();
-  term_write("\n");
-
-#endif
-
   // This ridiculous code finds the RSDP, which is used to find the ACPI
   // The ACPI holds important system information
   uint8_t sum = 0;
@@ -98,7 +92,13 @@ void kernel_main() {
   }
 
   // TODO: What portion of the mem should the kernel heap be? Think of higher half stuff here.
-  buddy_alloc_init(600000, 800000);
+  buddy_alloc_init(0xFF000000, 0xFFFF0000);
+
+#ifndef RELEASE
+  test_all_functions();
+  term_write("\n");
+#endif
+
   init_pic();
 
   while (1) {
