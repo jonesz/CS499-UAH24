@@ -1,3 +1,6 @@
+#ifndef ASM_TOOLS_H
+#define ASM_TOOLS_H
+
 #include <stdint.h>
 
 static inline void outb(uint16_t port, uint8_t dat) {
@@ -10,3 +13,5 @@ static inline uint8_t inb(uint16_t port) {
 }
 
 static inline void io_wait() { outb(0x80, 0); }
+
+#endif

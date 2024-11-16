@@ -2,7 +2,7 @@ CC=i686-elf-gcc
 AR=i686-elf-ar
 
 INCLUDE = -I../include/
-OBJECT = interrupt.o isr_wrappers.o
+OBJECT = interrupt.o isr_wrappers.o key_handler.o
 TARGET = libinterrupt.a
 
 all: $(TARGET)
