@@ -8,7 +8,7 @@ INCLUDE=include/
 
 all: kernel.bin kernel.iso
 
-kernel.bin: boot.o kernel.o mem/libmem.a interrupt/libinterrupt.a vid/libvid.a test/libtest.a libk.a sched/libsched.a
+kernel.bin: boot.o kernel.o mem/libmem.a interrupt/libinterrupt.a vid/libvid.a test/libtest.a sched/libsched.a libk.a
 	$(CC) -T linker.ld -o $@ -ffreestanding -O2 -nostdlib $^ -lgcc $(DEF) -I$(INCLUDE)
 
 .PHONY: mem/libmem.a vid/libvid.a interrupt/libinterrupt.a test/libtest.a sched/libsched.a
