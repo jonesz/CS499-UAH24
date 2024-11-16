@@ -1,5 +1,5 @@
-#include "sched.h"
-#include <string.h>
+#include "sched/sched.h"
+#include "libc/string.h"
 
 static scheduler_t scheduler;
 // Dispatch a new process while running within an interrupt routine.
@@ -17,7 +17,7 @@ int sched_init() {
 }
 
 // Handle an interrupt.
-void sched_interrupt(uint32_t counter) {
+void sched_interrupt(uint32_t counter, uint32_t stack_loc) {
   if (counter % TIME_SLICE_CONSTANT == 0) {
     dispatch_interrupt();
   }
