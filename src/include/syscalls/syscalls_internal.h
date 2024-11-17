@@ -12,6 +12,7 @@ struct _send_args_t {
     uint32_t comm_channel;
 };
 struct _recv_args_t {
+    msg_t* msg_dest;
     uint32_t comm_channel;
 };
 struct _sleep_args_t {

@@ -109,10 +109,9 @@ void kernel_main() {
   sched_admit((uint32_t)process_2);
 
   init_pic();
-  msg_t* m = 0;
-  send(m, 0xBEEEF);
 
   while (1) {
+
     asm("mov $0x1337, %eax");
     asm("mov $0x420, %ebx");
     asm("mov $0x69, %ecx");
@@ -124,12 +123,22 @@ void kernel_main() {
 volatile void process_1() {
   volatile uint32_t idx = 0;
   uint32_t overflows = 0;
+
+  char buf[MSG_T_MAX] = {0};
+  uint32_t buflen = MSG_T_MAX;
+  msg_t msg = {0};
+  msg.data = buf;
+  msg.length = buflen;
+
   while (1) {
     if (idx == 0) {
       //term_format("process 1: overflowed %x times\n", &overflows);
+  
       overflows += 1;
     }
-
+    if(recv(&msg, 0)) {
+      term_format("RECV: %s", msg.data);
+    }
     idx = (idx + 1) & 0xFFFFFF;
   }
 }

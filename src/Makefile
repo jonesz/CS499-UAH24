@@ -56,6 +56,7 @@ start-iso: kernel.iso
 .PHONY: clean format
 
 clean:
+	+$(MAKE) -C syscalls clean
 	+$(MAKE) -C sched clean
 	+$(MAKE) -C interrupt clean
 	+$(MAKE) -C mem clean

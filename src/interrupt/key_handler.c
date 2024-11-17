@@ -1,6 +1,7 @@
 #include "interrupt/key_handler.h"
 #include "interrupt/asm_tools.h"
 #include "interrupt/interrupt.h"
+#include "syscalls/syscalls.h"
 #include "vid/term.h"
 #include <stdint.h>
 
@@ -87,8 +88,16 @@ void key_handler(uint32_t int_num) {
       term_format("%s", ascii_char);
       // Send the message and clear the buffer if the message is ended
       if (ascii_char[0] == '\n') {
-        // TODO(Britton): Send the message over IPC
-        term_format("Send MSG: %s\n", msg);
+        msg_t sys_msg = {0};
+        sys_msg.data = msg;
+        sys_msg.length = msg_index + 1;
+
+        if (send(&sys_msg, 0)) {
+          // Send success
+        } else {
+          // Send failure (system msg buffer full)
+        }
+
         for (uint32_t i = 0; i <= msg_index; i++) {
           msg[i] = 0;
         }
