@@ -1,5 +1,6 @@
 #include "sched/sched.h"
 #include "libc/string.h"
+#include "vid/term.h"
 
 static scheduler_t scheduler;
 // Dispatch a new process while running within an interrupt routine.
@@ -8,12 +9,22 @@ static void sched_interrupt_store(unsigned int idx, uint32_t stack_loc);
 static void sched_interrupt_replace(unsigned int idx, uint32_t stack_loc);
 
 // Define the round-robin time slice.
-#define TIME_SLICE_CONSTANT 128
+#define TIME_SLICE_CONSTANT 16
 
 // Initialize the scheduler.
 int sched_init() {
   memset(&scheduler, 0, sizeof(scheduler));
   return 0;
+}
+
+void sched_admit(uint32_t eip) {
+  for (int i = 0; i < MAX_PROCESSES; i++) {
+    if (scheduler.process_table[i].state == PROCESS_UNUSED) {
+      scheduler.process_table[i].eip = eip;
+      scheduler.process_table[i].state = PROCESS_READY;
+      return;
+    }
+  }
 }
 
 // Handle an interrupt.

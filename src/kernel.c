@@ -1,4 +1,5 @@
 /** src/kernel.c */
+#include "sched/sched.h"
 #include "mem/kmalloc.h"
 #include "mem/multiboot.h"
 #include "vid/term.h"
@@ -10,6 +11,8 @@
 #include "libc/string.h"
 
 extern multiboot_info_t *boot_info;
+static void process_1();
+static void process_2();
 
 void kernel_main() {
   term_init();
@@ -97,6 +100,8 @@ void kernel_main() {
   }
 
   init_pic();
+  sched_admit((uint32_t)&process_1);
+  sched_admit((uint32_t)&process_2);
 
   while (1) {
     asm("mov $0x1337, %eax");
@@ -105,5 +110,25 @@ void kernel_main() {
     asm("mov $0x7, %edx");
 
     asm("nop");
+  }
+}
+
+void process_1() {
+  uint8_t idx = 0;
+  while (1) {
+    if (idx == 0) {
+      term_write("Process 1\n");
+      idx++;
+    }
+  }
+}
+
+void process_2() {
+  uint8_t idx = 0;
+  while (1) {
+    if (idx == 0) {
+      term_write("Process 2\n");
+      idx++;
+    }
   }
 }

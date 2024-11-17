@@ -2,9 +2,10 @@
 #define SCHED_PROCESS
 #include <stdint.h>
 
-#define PROCESS_RUNNING 0x0
-#define PROCESS_READY   0x1
-#define PROCESS_BLOCKED 0x2
+#define PROCESS_UNUSED  0x0
+#define PROCESS_RUNNING 0x1
+#define PROCESS_READY   0x2
+#define PROCESS_BLOCKED 0x3
 
 typedef struct _x86_register_ctx {
   // GPRs.
