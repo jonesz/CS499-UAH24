@@ -5,6 +5,8 @@
 #include <stdint.h>
 
 static uint32_t state_flags;
+static char msg[MSG_MAX + 1];
+static uint32_t msg_index;
 
 void clear_bit(uint32_t *x, uint32_t bit) {
   uint32_t mask = ~bit;
@@ -26,6 +28,9 @@ void key_handler(uint32_t int_num) {
   uint8_t shift = (state_flags & (RSHIFT_DOWN | LSHIFT_DOWN)) ? 1 : 0;
 
   if (!keyup) {
+    if (scan_code == 0x0) {
+      // ERROR CODE
+    }
     if (scan_code == 0x1) {
       // ESCAPE
     } else if (scan_code <= 0xD) {
@@ -69,8 +74,28 @@ void key_handler(uint32_t int_num) {
     }
 
     if (ascii_char[0]) {
+
+      // Force the message to end if this character would fill the buffer
+      if (msg_index >= MSG_MAX - 1) {
+        ascii_char[0] = '\n';
+        msg[msg_index] = ascii_char[0];
+      } else {
+        msg[msg_index] = ascii_char[0];
+        msg_index++;
+      }
+      // Echo the character
       term_format("%s", ascii_char);
+      // Send the message and clear the buffer if the message is ended
+      if (ascii_char[0] == '\n') {
+        // TODO(Britton): Send the message over IPC
+        term_format("Send MSG: %s\n", msg);
+        for (uint32_t i = 0; i <= msg_index; i++) {
+          msg[i] = 0;
+        }
+        msg_index = 0;
+      }
     }
+    // Handle Key release
   } else {
 
     if (scan_code == 0x2A) {

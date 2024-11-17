@@ -11,6 +11,8 @@
 
 #define KEYUP_BIT 128
 
+#define MSG_MAX 1023
+
 void key_handler(uint32_t int_num);
 
 #endif
