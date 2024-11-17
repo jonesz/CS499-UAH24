@@ -27,6 +27,7 @@ __attribute__((
 void interrupt_handler(uint32_t int_num, uint32_t stack_pos) {
   switch (int_num) {
   case KEYBOARD_ISR: {
+    term_format("stack_pos: %x\n", &stack_pos);
     key_handler(int_num);
   } break;
 
@@ -35,7 +36,7 @@ void interrupt_handler(uint32_t int_num, uint32_t stack_pos) {
      break;
 
   default: {
-    term_format("Got interrupt %x.\n", &int_num);
+     term_format("Got interrupt %x.\n", &int_num);
   }
   }
 }
@@ -115,7 +116,7 @@ void init_pic() {
   // NOTE(BP): The mask I currently set only disables timer interrupts,
   // In my testing the timer was spamming interrupts and causing a headache,
   // So this will need to be changed when we actually want to use the timer.
-  outb(MPIC_DAT, 0x0);
+  outb(MPIC_DAT, 0x0);;
   outb(SPIC_DAT, 0x0);
   io_wait();
 }
