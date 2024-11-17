@@ -99,6 +99,11 @@ void kernel_main() {
   init_pic();
 
   while (1) {
+    asm("mov $0x1337, %eax");
+    asm("mov $0x420, %ebx");
+    asm("mov $0x69, %ecx");
+    asm("mov $0x7, %edx");
+
     asm("nop");
   }
 }

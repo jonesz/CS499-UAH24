@@ -27,7 +27,14 @@ __attribute__((
 void interrupt_handler(uint32_t int_num, uint32_t stack_pos) {
   switch (int_num) {
   case KEYBOARD_ISR: {
-    term_format("stack_pos: %x\n", &stack_pos);
+    term_format("stack_pos:  %x\n", &stack_pos);
+    stack_pos = stack_pos - (4 * 5);
+    for (int i = 0; i < 10; i++) {
+      uint32_t pos = (stack_pos + (i * 4));
+      uint32_t pos_d = *(uint32_t *)pos;
+      term_format("%x:", &pos);
+      term_format(" %x\n", &pos_d);
+    }
     key_handler(int_num);
   } break;
 
