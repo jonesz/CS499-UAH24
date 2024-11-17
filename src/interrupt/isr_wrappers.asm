@@ -7,7 +7,8 @@ isr%1:
         cli
 
         pushad
-        mov eax, [esp+12] ; pushad pushes AX, CX, DX, EBX, ESP, EBP, ESI, EDI. So the original ESP exists at [esp+12]?
+        mov eax, [esp+12] ; pushad pushes EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI. So the original ESP exists at [esp+12]?
+        sub eax, 4        ; point the stack lock at EAX rather than the mem before it.
         push eax
         mov eax, %1
         push eax
