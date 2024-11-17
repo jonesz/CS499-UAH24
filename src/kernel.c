@@ -136,6 +136,8 @@ volatile void process_1() {
   
       overflows += 1;
     }
+    // TODO(Britton): An unknown bug causes this to result in an "Invalid Opcode" on some builds,
+    // Diagnose and fix
     if(recv(&msg, 0)) {
       term_format("RECV: %s", msg.data);
     }
