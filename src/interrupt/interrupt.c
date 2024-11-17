@@ -116,7 +116,7 @@ void init_pic() {
   // NOTE(BP): The mask I currently set only disables timer interrupts,
   // In my testing the timer was spamming interrupts and causing a headache,
   // So this will need to be changed when we actually want to use the timer.
-  outb(MPIC_DAT, 0x0);;
+  outb(MPIC_DAT, 0x0);
   outb(SPIC_DAT, 0x0);
   io_wait();
 }
