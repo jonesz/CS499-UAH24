@@ -8,8 +8,10 @@
 #include "interrupt/interrupt.h"
 #include "interrupt/asm_tools.h"
 #include "interrupt/isr.h"
-#include "sched/sched.h"
 #include "interrupt/key_handler.h"
+#include "sched/sched.h"
+#include "syscalls/syscalls.h"
+#include "syscalls/syscalls_internal.h"
 #include "vid/term.h"
 
 // TODO: At some point, this should be shared mem between the scheduler and the
@@ -36,8 +38,8 @@ void interrupt_handler(uint32_t int_num, uint32_t stack_pos) {
   } break;
 
   case TIMER_ISR:
-     timer_handler(stack_pos);
-     break;
+    timer_handler(stack_pos);
+    break;
 
   case GENERAL_PROTECTION_ERROR:
     term_write("Protection Fault\n");
@@ -51,16 +53,20 @@ void interrupt_handler(uint32_t int_num, uint32_t stack_pos) {
       volatile int b = 0;
     }
     break;
-
+  case SWINT_ISR:
+    syscall_info_t *eax =
+        (syscall_info_t *)(*(uint32_t *)(stack_pos - (4 * 0)));
+    handle_syscall(*eax);
+    break;
   case 0x6:
     term_write("INVALID OPCODE?\n");
-    while(1) {
+    while (1) {
       volatile int b = 0;
     }
     break;
 
   default: {
-     term_format("Got interrupt %x.\n", &int_num);
+    term_format("Got interrupt %x.\n", &int_num);
   }
   }
 }

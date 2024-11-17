@@ -9,6 +9,7 @@
 #include "test/test.h"
 #include <stddef.h>
 #include "libc/string.h"
+#include "syscalls/syscalls.h"
 
 extern multiboot_info_t *boot_info;
 static void process_1();
@@ -108,6 +109,8 @@ void kernel_main() {
   sched_admit((uint32_t)process_2);
 
   init_pic();
+  msg_t* m = 0;
+  send(m, 0xBEEEF);
 
   while (1) {
     asm("mov $0x1337, %eax");
@@ -123,7 +126,7 @@ volatile void process_1() {
   uint32_t overflows = 0;
   while (1) {
     if (idx == 0) {
-      term_format("process 1: overflowed %x times\n", &overflows);
+      //term_format("process 1: overflowed %x times\n", &overflows);
       overflows += 1;
     }
 
@@ -136,7 +139,7 @@ volatile void process_2() {
   uint32_t overflows = 0;
   while (1) {
     if (idx == 0) {
-      term_format("process 2: overflowed %x times\n", &overflows);
+      //term_format("process 2: overflowed %x times\n", &overflows);
       overflows += 1;
     }
 
