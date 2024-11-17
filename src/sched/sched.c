@@ -45,6 +45,11 @@ static void dispatch_interrupt(uint32_t stack_loc) {
 }
 
 static void sched_interrupt_store(unsigned int idx, uint32_t stack_loc) {
+  // EIP is at stack_loc (which is where the ISR `pushad` + 8).
+  uint32_t eip = *(uint32_t *)(stack_loc + (4 * 2));
+  // EFLAGS is right after that.
+  uint32_t EFLAGS = *(uint32_t *)(stack_loc + (4 * 1));
+
   uint32_t eax = *(uint32_t *)(stack_loc - (4 * 0));
   uint32_t ecx = *(uint32_t *)(stack_loc - (4 * 1));
   uint32_t edx = *(uint32_t *)(stack_loc - (4 * 2));
@@ -54,6 +59,8 @@ static void sched_interrupt_store(unsigned int idx, uint32_t stack_loc) {
   uint32_t esi = *(uint32_t *)(stack_loc - (4 * 6));
   uint32_t edi = *(uint32_t *)(stack_loc - (4 * 7));
 
+  scheduler.process_table[idx].eip = eip;
+  scheduler.process_table[idx].register_ctx.EFLAGS = EFLAGS;
   scheduler.process_table[idx].register_ctx.eax = eax;
   scheduler.process_table[idx].register_ctx.ebx = ebx;
   scheduler.process_table[idx].register_ctx.ecx = ecx;
@@ -65,6 +72,8 @@ static void sched_interrupt_store(unsigned int idx, uint32_t stack_loc) {
 }
 
 static void sched_interrupt_replace(unsigned int idx, uint32_t stack_loc) {
+  uint32_t *eip = (uint32_t *)(stack_loc + (4 * 2));
+  uint32_t *EFLAGS = (uint32_t *)(stack_loc + (4 * 1));
   uint32_t *eax = (uint32_t *)(stack_loc - (4 * 0));
   uint32_t *ecx = (uint32_t *)(stack_loc - (4 * 1));
   uint32_t *edx = (uint32_t *)(stack_loc - (4 * 2));
@@ -74,6 +83,8 @@ static void sched_interrupt_replace(unsigned int idx, uint32_t stack_loc) {
   uint32_t *esi = (uint32_t *)(stack_loc - (4 * 6));
   uint32_t *edi = (uint32_t *)(stack_loc - (4 * 7));
   
+  *eip = scheduler.process_table[idx].eip;
+  *EFLAGS = scheduler.process_table[idx].register_ctx.EFLAGS;
   *eax = scheduler.process_table[idx].register_ctx.eax;
   *ecx = scheduler.process_table[idx].register_ctx.ecx;
   *edx = scheduler.process_table[idx].register_ctx.edx;

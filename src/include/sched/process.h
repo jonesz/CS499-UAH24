@@ -33,9 +33,6 @@ typedef struct _pcb_t {
   uint32_t eip;
   x86_register_ctx register_ctx;
 
-  uint32_t *stack_ptr;
-  uint32_t *heap_ptr;
-
   uint8_t state;
 } pcb_t;
 
