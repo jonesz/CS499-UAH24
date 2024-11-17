@@ -2,7 +2,7 @@ CC=i686-elf-gcc
 AR=i686-elf-ar
 
 INCLUDE = -I../include/
-OBJECT = sched.o
+OBJECT = sched.o process.o
 TARGET = libsched.a
 
 all: $(TARGET)

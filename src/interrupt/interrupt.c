@@ -33,6 +33,9 @@ void interrupt_handler(uint32_t int_num, uint32_t stack_pos) {
   case TIMER_ISR:
      timer_handler(stack_pos);
      break;
+  case 0xD:
+    term_write("Protection Fault\n");
+    break;
 
   default: {
      term_format("Got interrupt %x.\n", &int_num);

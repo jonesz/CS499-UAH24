@@ -9,7 +9,7 @@ static void sched_interrupt_store(unsigned int idx, uint32_t stack_loc);
 static void sched_interrupt_replace(unsigned int idx, uint32_t stack_loc);
 
 // Define the round-robin time slice.
-#define TIME_SLICE_CONSTANT 16
+#define TIME_SLICE_CONSTANT 32
 
 // Initialize the scheduler.
 int sched_init() {
@@ -21,7 +21,16 @@ void sched_admit(uint32_t eip) {
   for (int i = 0; i < MAX_PROCESSES; i++) {
     if (scheduler.process_table[i].state == PROCESS_UNUSED) {
       scheduler.process_table[i].eip = eip;
+      // TODO: This might be borked; we're going to use the kernel's EFLAGS.
+      uint32_t eflags;
+      asm volatile ("pushfl;\
+                                    popl %%eax;       \
+                                    movl %%eax, %0;"  \
+                                    :"=m" (eflags)     \
+                                    ); 
+      scheduler.process_table[i].register_ctx.EFLAGS = eflags;
       scheduler.process_table[i].state = PROCESS_READY;
+      print_pcb(&scheduler.process_table[i]);
       return;
     }
   }
@@ -36,19 +45,38 @@ void sched_interrupt(uint32_t counter, uint32_t stack_loc) {
 
 // Dispatch a new process while running within an interrupt routine.
 static void dispatch_interrupt(uint32_t stack_loc) {
+  size_t cur = 0;
+  for (int i = 0; i < MAX_PROCESSES; i++) {
+    if (scheduler.process_table[i].state == PROCESS_RUNNING) {
+      cur = i;
+      break;
+    }
+
+    // If we couldn't find a process that is running, we're at program startup.
+    // Throw the process at '0' on the stack.
+    term_write("No PROCESS_RUNNING\n");
+    sched_interrupt_replace(0, stack_loc);
+    scheduler.process_table[0].state = PROCESS_RUNNING;
+    uint32_t eip = *(uint32_t *)(stack_loc + (4 * 2));
+    term_format("%x", &eip);
+    return;
+  }
+
   for (int i = 0; i < MAX_PROCESSES; i++) {
     // Start at the last process, searching for something that is
     // 'READY' and not blocked.
-    int idx = (scheduler.cur + i) % MAX_PROCESSES;
+    int idx = (cur + i) % MAX_PROCESSES;
     if (scheduler.process_table[idx].state == PROCESS_READY) {
       // 1. The interrupted process state exists on the stack -> store
       // it to the 'cur' idx.
-      sched_interrupt_store(scheduler.cur, stack_loc);
+      sched_interrupt_store(cur, stack_loc);
       // 2. Replace the interrupted process on the stack with the new one.
       sched_interrupt_replace(idx, stack_loc);
-      // 3. Set the current process to READY.
-      scheduler.process_table[scheduler.cur].state = PROCESS_READY;
-      // 4. Set the new process to RUNNING.
+      uint32_t eip = *(uint32_t *)(stack_loc + (4 * 2));
+      term_format("%x", &eip);
+      // 3. Set the previous process to READY.
+      scheduler.process_table[cur].state = PROCESS_READY;
+      // 4. Set the next process to RUNNING.
       scheduler.process_table[idx].state = PROCESS_RUNNING;
       return;
     }

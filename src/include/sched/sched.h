@@ -10,8 +10,6 @@
 typedef struct _scheduler_t {
   // A set of running processes.
   pcb_t process_table[MAX_PROCESSES];
-  // The index of the current `RUNNING` process.
-  uint8_t cur;
 } scheduler_t;
 
 int sched_init();

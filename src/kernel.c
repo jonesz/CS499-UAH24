@@ -99,36 +99,43 @@ void kernel_main() {
     term_format("Table: %s\n", *((uint32_t **)&(rsdt->PointerToOtherSDT) + i));
   }
 
+  uint32_t p1 = (uint32_t) process_1;
+  uint32_t p2 = (uint32_t) process_2;
+  term_format("p1: %x\n", &p1);
+  term_format("p2: %x\n", &p2);
+
+  sched_admit((uint32_t)process_1);
+  sched_admit((uint32_t)process_2);
+
   init_pic();
-  sched_admit((uint32_t)&process_1);
-  sched_admit((uint32_t)&process_2);
 
   while (1) {
-    asm("mov $0x1337, %eax");
-    asm("mov $0x420, %ebx");
-    asm("mov $0x69, %ecx");
-    asm("mov $0x7, %edx");
-
     asm("nop");
   }
 }
 
 void process_1() {
-  uint8_t idx = 0;
+  volatile uint32_t idx = 0;
+  uint32_t overflows = 0;
   while (1) {
     if (idx == 0) {
-      term_write("Process 1\n");
-      idx++;
+      term_format("process 1: overflowed %x times\n", &overflows);
+      overflows += 1;
     }
+
+    idx = idx + 1;
   }
 }
 
 void process_2() {
-  uint8_t idx = 0;
+  volatile uint32_t idx = 0;
+  uint32_t overflows = 0;
   while (1) {
     if (idx == 0) {
-      term_write("Process 2\n");
-      idx++;
+      term_format("process 1: overflowed %x times\n", &overflows);
+      overflows += 1;
     }
+
+    idx = idx + 1;
   }
 }

@@ -37,4 +37,6 @@ typedef struct _pcb_t {
   uint8_t state;
 } pcb_t;
 
+void print_pcb(pcb_t *pcb);
+
 #endif // SCHED_PROCESS
