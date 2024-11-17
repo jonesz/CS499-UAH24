@@ -33,8 +33,25 @@ void interrupt_handler(uint32_t int_num, uint32_t stack_pos) {
   case TIMER_ISR:
      timer_handler(stack_pos);
      break;
-  case 0xD:
+
+  case GENERAL_PROTECTION_ERROR:
     term_write("Protection Fault\n");
+    uint32_t error_code = *(uint32_t *)(stack_pos + 4);
+    term_format("ERRORCODE: %x\n", &error_code);
+    uint32_t EIP = *(uint32_t *)(stack_pos + 8);
+    term_format("EIP: %x\n", &EIP);
+    uint32_t EFLAGS = *(uint32_t *)(stack_pos + 14);
+    term_format("EFLAGS: %x\n", &EFLAGS);
+    while (1) {
+      volatile int b = 0;
+    }
+    break;
+
+  case 0x6:
+    term_write("INVALID OPCODE?\n");
+    while(1) {
+      volatile int b = 0;
+    }
     break;
 
   default: {

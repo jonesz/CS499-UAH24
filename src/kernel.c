@@ -110,11 +110,15 @@ void kernel_main() {
   init_pic();
 
   while (1) {
+    asm("mov $0x1337, %eax");
+    asm("mov $0x420, %ebx");
+    asm("mov $0x69, %ecx");
+    asm("mov $0x7, %edx");
     asm("nop");
   }
 }
 
-void process_1() {
+volatile void process_1() {
   volatile uint32_t idx = 0;
   uint32_t overflows = 0;
   while (1) {
@@ -123,19 +127,19 @@ void process_1() {
       overflows += 1;
     }
 
-    idx = idx + 1;
+    idx = (idx + 1) & 0xFFFFFF;
   }
 }
 
-void process_2() {
+volatile void process_2() {
   volatile uint32_t idx = 0;
   uint32_t overflows = 0;
   while (1) {
     if (idx == 0) {
-      term_format("process 1: overflowed %x times\n", &overflows);
+      term_format("process 2: overflowed %x times\n", &overflows);
       overflows += 1;
     }
 
-    idx = idx + 1;
+    idx = (idx + 1) & 0xFFFFFF;
   }
 }

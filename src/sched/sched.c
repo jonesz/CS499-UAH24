@@ -9,7 +9,7 @@ static void sched_interrupt_store(unsigned int idx, uint32_t stack_loc);
 static void sched_interrupt_replace(unsigned int idx, uint32_t stack_loc);
 
 // Define the round-robin time slice.
-#define TIME_SLICE_CONSTANT 32
+#define TIME_SLICE_CONSTANT 4
 
 // Initialize the scheduler.
 int sched_init() {
@@ -20,17 +20,18 @@ int sched_init() {
 void sched_admit(uint32_t eip) {
   for (int i = 0; i < MAX_PROCESSES; i++) {
     if (scheduler.process_table[i].state == PROCESS_UNUSED) {
-      scheduler.process_table[i].eip = eip;
       // TODO: This might be borked; we're going to use the kernel's EFLAGS.
+      scheduler.process_table[i].eip = eip;
       uint32_t eflags;
       asm volatile ("pushfl;\
                                     popl %%eax;       \
                                     movl %%eax, %0;"  \
                                     :"=m" (eflags)     \
                                     ); 
+
       scheduler.process_table[i].register_ctx.EFLAGS = eflags;
+      scheduler.process_table[i].register_ctx.cs = 0x8; // TODO: fix this later.
       scheduler.process_table[i].state = PROCESS_READY;
-      print_pcb(&scheduler.process_table[i]);
       return;
     }
   }
@@ -45,20 +46,21 @@ void sched_interrupt(uint32_t counter, uint32_t stack_loc) {
 
 // Dispatch a new process while running within an interrupt routine.
 static void dispatch_interrupt(uint32_t stack_loc) {
-  size_t cur = 0;
+  int cur = -1;
   for (int i = 0; i < MAX_PROCESSES; i++) {
     if (scheduler.process_table[i].state == PROCESS_RUNNING) {
       cur = i;
       break;
     }
+  }
 
+  if (cur == -1) {
     // If we couldn't find a process that is running, we're at program startup.
     // Throw the process at '0' on the stack.
-    term_write("No PROCESS_RUNNING\n");
     sched_interrupt_replace(0, stack_loc);
     scheduler.process_table[0].state = PROCESS_RUNNING;
-    uint32_t eip = *(uint32_t *)(stack_loc + (4 * 2));
-    term_format("%x", &eip);
+    uint32_t eip = *(uint32_t *)(stack_loc + 4);
+    term_format("UNABLE TO FIND RUNNING PROCESS; EIP: %x\n", &eip);
     return;
   }
 
@@ -72,8 +74,6 @@ static void dispatch_interrupt(uint32_t stack_loc) {
       sched_interrupt_store(cur, stack_loc);
       // 2. Replace the interrupted process on the stack with the new one.
       sched_interrupt_replace(idx, stack_loc);
-      uint32_t eip = *(uint32_t *)(stack_loc + (4 * 2));
-      term_format("%x", &eip);
       // 3. Set the previous process to READY.
       scheduler.process_table[cur].state = PROCESS_READY;
       // 4. Set the next process to RUNNING.
@@ -84,10 +84,9 @@ static void dispatch_interrupt(uint32_t stack_loc) {
 }
 
 static void sched_interrupt_store(unsigned int idx, uint32_t stack_loc) {
-  // EIP is at stack_loc (which is where the ISR `pushad` + 8).
-  uint32_t eip = *(uint32_t *)(stack_loc + (4 * 2));
-  // EFLAGS is right after that.
-  uint32_t EFLAGS = *(uint32_t *)(stack_loc + (4 * 1));
+  uint32_t EFLAGS = *(uint32_t *)(stack_loc + 12);
+  uint32_t cs  = *(uint32_t *)(stack_loc + 8);
+  uint32_t eip = *(uint32_t *)(stack_loc + 4);
 
   uint32_t eax = *(uint32_t *)(stack_loc - (4 * 0));
   uint32_t ecx = *(uint32_t *)(stack_loc - (4 * 1));
@@ -99,6 +98,7 @@ static void sched_interrupt_store(unsigned int idx, uint32_t stack_loc) {
   uint32_t edi = *(uint32_t *)(stack_loc - (4 * 7));
 
   scheduler.process_table[idx].eip = eip;
+  scheduler.process_table[idx].register_ctx.cs = cs;
   scheduler.process_table[idx].register_ctx.EFLAGS = EFLAGS;
   scheduler.process_table[idx].register_ctx.eax = eax;
   scheduler.process_table[idx].register_ctx.ebx = ebx;
@@ -111,8 +111,10 @@ static void sched_interrupt_store(unsigned int idx, uint32_t stack_loc) {
 }
 
 static void sched_interrupt_replace(unsigned int idx, uint32_t stack_loc) {
-  uint32_t *eip = (uint32_t *)(stack_loc + (4 * 2));
-  uint32_t *EFLAGS = (uint32_t *)(stack_loc + (4 * 1));
+  uint32_t *EFLAGS = (uint32_t *)(stack_loc + 12);
+  uint32_t *cs  = (uint32_t *)(stack_loc + 8);
+  uint32_t *eip = (uint32_t *)(stack_loc + 4);
+
   uint32_t *eax = (uint32_t *)(stack_loc - (4 * 0));
   uint32_t *ecx = (uint32_t *)(stack_loc - (4 * 1));
   uint32_t *edx = (uint32_t *)(stack_loc - (4 * 2));
@@ -123,6 +125,7 @@ static void sched_interrupt_replace(unsigned int idx, uint32_t stack_loc) {
   uint32_t *edi = (uint32_t *)(stack_loc - (4 * 7));
   
   *eip = scheduler.process_table[idx].eip;
+  *cs = scheduler.process_table[idx].register_ctx.cs;
   *EFLAGS = scheduler.process_table[idx].register_ctx.EFLAGS;
   *eax = scheduler.process_table[idx].register_ctx.eax;
   *ecx = scheduler.process_table[idx].register_ctx.ecx;
