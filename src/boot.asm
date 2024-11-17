@@ -98,7 +98,6 @@ _start:
         mov eax, cr0
         pop eax
         pop eax
-        ; re-enable interrupts
 
         ; setup IDT.
         extern isr0
@@ -110,6 +109,7 @@ _start:
         extern setup_idt
         call setup_idt
 
+        ; re-enable interrupts
         sti
 ; Enter the main kernel.
         extern kernel_main
