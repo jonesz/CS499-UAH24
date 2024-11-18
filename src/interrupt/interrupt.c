@@ -9,6 +9,9 @@
 #include "interrupt/asm_tools.h"
 #include "interrupt/isr.h"
 #include "interrupt/key_handler.h"
+#include "sched/sched.h"
+#include "syscalls/syscalls.h"
+#include "syscalls/syscalls_internal.h"
 #include "vid/term.h"
 
 // TODO: At some point, this should be shared mem between the scheduler and the
@@ -18,14 +21,14 @@ uint32_t counter = 0;
 #define MAX_IDT_ENTRIES 256
 static void idt_set_descriptor(int idx, void *isr, uint8_t flags);
 
-static void timer_handler();
+static void timer_handler(uint32_t stack_loc);
 
 extern void *isr;
 static idt_descriptor_t idt_desc;
 __attribute__((
     aligned(0x10))) static idt_gate_descriptor_t idt_table[MAX_IDT_ENTRIES];
 
-void interrupt_handler(uint32_t int_num) {
+void interrupt_handler(uint32_t int_num, uint32_t stack_pos) {
   switch (int_num) {
   case KEYBOARD_ISR: {
     // TODO(Britton): When sched is reasonably functional, the key handler
@@ -35,7 +38,31 @@ void interrupt_handler(uint32_t int_num) {
   } break;
 
   case TIMER_ISR:
-    timer_handler();
+    timer_handler(stack_pos);
+    break;
+
+  case GENERAL_PROTECTION_ERROR:
+    term_write("Protection Fault\n");
+    uint32_t error_code = *(uint32_t *)(stack_pos + 4);
+    term_format("ERRORCODE: %x\n", &error_code);
+    uint32_t EIP = *(uint32_t *)(stack_pos + 8);
+    term_format("EIP: %x\n", &EIP);
+    uint32_t EFLAGS = *(uint32_t *)(stack_pos + 14);
+    term_format("EFLAGS: %x\n", &EFLAGS);
+    while (1) {
+      volatile int b = 0;
+    }
+    break;
+  case SWINT_ISR:
+    syscall_info_t *eax =
+        (syscall_info_t *)(*(uint32_t *)(stack_pos - (4 * 0)));
+    handle_syscall(*eax);
+    break;
+  case 0x6:
+    term_write("INVALID OPCODE?\n");
+    while (1) {
+      volatile int b = 0;
+    }
     break;
 
   default: {
@@ -44,8 +71,9 @@ void interrupt_handler(uint32_t int_num) {
   }
 }
 
-void timer_handler() {
+void timer_handler(uint32_t stack_loc) {
   counter += 1;
+  sched_interrupt(counter, stack_loc);
   outb(MPIC_CMD, 0x20);
 }
 
