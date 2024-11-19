@@ -1,114 +1,110 @@
-/* buddy_alloc.c; Ethan Jones <erj0005@uah.edu> */
+/**
+ * `mem/buddy_alloc.c`, Ethan Jones <erj0005@uah.edu.>
+ **/
+
 #include "mem/buddy_alloc.h"
-#include "vid/term.h"
-#include <stdint.h>
 
-typedef struct _block_t {
-  uint32_t addr_beg;
-  uint32_t addr_end;
-  uint8_t alloc;
-  struct _block_t *left;
-  struct _block_t *right;
-} block_t;
+typedef struct _node_t {
+  uint32_t offset;
+  size_t sz;
+  uint8_t allocated;
+  struct _node_t *left;
+  struct _node_t *right;
+} node_t;
 
-static block_t allocator;
+static node_t allocator;
 
-static void *_internal_alloc(block_t *allocator, size_t sz);
-void _internal_free(block_t *allocator, void *ptr);
-static void print_block(block_t *allocator);
+static void *internal_alloc(node_t *node, size_t req);
+static void internal_free(node_t *node, void *ptr);
 
-void buddy_alloc_init(uint32_t addr_beg, uint32_t addr_end) {
-  allocator.addr_beg = addr_beg;
-  allocator.addr_end = addr_end;
-  allocator.alloc = 0;
+// Initialize the allocator.
+void buddy_alloc_init(uint32_t offset, size_t sz) {
+  allocator.offset = offset;
+  allocator.sz = sz;
+  allocator.allocated = 0;
   allocator.left = NULL;
   allocator.right = NULL;
+  return;
 }
 
-static void print_block(block_t *allocator) {
-  term_format("allocator->addr_beg: %x\n", &allocator->addr_beg);
-  term_format("allocator->addr_end: %x\n", &allocator->addr_end);
-  size_t mem_available = allocator->addr_end - allocator->addr_beg;
-  term_format("available mem: %x\n", &mem_available);
-  term_format("allocator->alloc: %x\n", &allocator->alloc);
-}
+void *buddy_alloc(size_t sz) { return internal_alloc(&allocator, sz); }
 
-void *buddy_alloc(size_t sz) { return _internal_alloc(&allocator, sz); }
+void buddy_alloc_free(void *ptr) { internal_free(&allocator, ptr); }
 
-void *_internal_alloc(block_t *allocator, size_t sz) {
-  term_format("Attempting to allocate %x bytes\n", &sz);
-  print_block(allocator);
-
-  // If the block is already allocated, return NULL.
-  if (allocator->alloc == 1) {
+static void *internal_alloc(node_t *node, size_t req) {
+  // The node can't fit the request, or it's already allocated, or if it's
+  // already been split; return NULL.
+  if (req > node->sz || node->allocated != 0 ||
+      (node->left != NULL && node->right != NULL)) {
     return NULL;
   }
 
-  // If we can't fit the allocation in this buffer, return NULL.
-  size_t mem_available = allocator->addr_end - allocator->addr_beg;
-  if (sz > mem_available) {
-    return NULL;
-  }
+  // If the node has been split, attempt to allocate within those splits.
+  if (node->left != NULL && node->right != NULL) {
+    void *left_result = internal_alloc(node->left, req);
+    if (left_result != NULL) {
+      return left_result;
+    }
 
-  // If this block has been split, attempt to allocate them with the splits.
-  void *recur = NULL;
-  if (allocator->left != NULL) {
-    recur = _internal_alloc(allocator->left, sz);
-    if (recur != NULL) {
-      return recur;
+    void *right_result = internal_alloc(node->right, req);
+    if (right_result != NULL) {
+      return right_result;
     }
   }
 
-  if (allocator->right != NULL) {
-    recur = _internal_alloc(allocator->right, sz);
-    if (recur != NULL) {
-      return recur;
-    }
+  // Split the node, and then attempt to allocate.
+  node_t *left = (node_t *)node->offset;
+  node_t *right = (node_t *)node->offset + sizeof(node_t);
+  node->left = left;
+  node->right = right;
+
+  size_t rem = node->sz - (sizeof(node_t) * 2);
+  left->offset = node->offset + sizeof(node_t) * 2;
+  left->sz = rem / 2;
+  left->left = NULL;
+  left->right = NULL;
+
+  right->offset = (node->offset + sizeof(node_t) * 2) + (rem / 2);
+  right->sz = rem / 2;
+  right->left = NULL;
+  right->right = NULL;
+
+  // Attempt to allocate on the left side, if it fails then reset the left and
+  // right pointers back to NULL.
+  void *left_result = internal_alloc(left, req);
+  if (left_result != NULL) {
+    return left_result;
   }
 
-  // Attempt to split the block into two...
-  // HDR |               MEM
-  // HDR (LEFT: HDR | MEM) (RIGHT: HDR | MEM)
-  if (allocator->left == NULL && allocator->right == NULL &&
-      ((mem_available / 2) - (sizeof(block_t) * 2) > sz)) {
-
-    // TODO: The pointers are fucked up here.
-    allocator->left = (block_t *)&allocator->addr_beg;
-    allocator->left->addr_beg = allocator->addr_beg + sizeof(block_t);
-    allocator->left->addr_end = allocator->left->addr_beg + ((mem_available / 2) - sizeof(block_t));
-    allocator->left->alloc = 0;
-    allocator->left->left = NULL;
-    allocator->left->right = NULL;
-
-    allocator->right = (block_t *)allocator->left->addr_end;
-    allocator->right->addr_beg = allocator->left->addr_end + sizeof(block_t);
-    allocator->right->addr_end = allocator->addr_end;
-    allocator->right->alloc = 0;
-    allocator->right->left = NULL;
-    allocator->right->right = NULL;
-
-    return _internal_alloc(allocator->left, sz);
-  } else {
-    allocator->alloc = 1;
-    return (void *)allocator->addr_beg;
-  }
+  // If that wasn't succesful, allocate within this chunk.
+  node->left = NULL;
+  node->right = NULL;
+  node->allocated = 1;
+  return (void *)node->offset;
 }
 
-void buddy_alloc_free(void *ptr) { _internal_free(&allocator, ptr); }
-
-void _internal_free(block_t *allocator, void *ptr) {
-  if (allocator->addr_beg == (uint32_t)ptr) {
-    allocator->alloc = 0;
+static void internal_free(node_t *node, void *ptr) {
+  if (node == NULL) {
     return;
   }
 
-  if (allocator->left != NULL && allocator->right != NULL) {
-    _internal_free(allocator->left, ptr);
-    _internal_free(allocator->right, ptr);
-  }
+  if (node->offset == (uint32_t)ptr) {
+    node->allocated = 0;
+    return;
+  } else {
+    internal_free(node->left, ptr);
+    internal_free(node->right, ptr);
 
-  if (allocator->left->alloc == 0 && allocator->right->alloc == 0) {
-    allocator->left = NULL;
-    allocator->right = NULL;
+    // To merge the child blocks, we need...
+    // 1. The left and right of this node to be non NULL.
+    // 2. Both of those children to not be allocated.
+    // 3. Both of those children to not be split themselves.
+    if (node->left != NULL && node->right != NULL &&
+        node->left->allocated == 0 && node->right->allocated == 0 &&
+        node->left->left == NULL && node->left->right == NULL &&
+        node->right->left == NULL && node->right->right == NULL) {
+      node->left = NULL;
+      node->right = NULL;
+    }
   }
 }
