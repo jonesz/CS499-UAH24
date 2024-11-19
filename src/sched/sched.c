@@ -17,11 +17,13 @@ int sched_init() {
   return 0;
 }
 
-void sched_admit(uint32_t eip) {
+void sched_admit(uint32_t eip, uint32_t ebp) {
   for (int i = 0; i < MAX_PROCESSES; i++) {
     if (scheduler.process_table[i].state == PROCESS_UNUSED) {
       // TODO: This might be borked; we're going to use the kernel's EFLAGS.
       scheduler.process_table[i].eip = eip;
+      scheduler.process_table[i].register_ctx.ebp = ebp;
+      scheduler.process_table[i].register_ctx.esp = ebp;
       uint32_t eflags;
       asm volatile ("pushfl;\
                                     popl %%eax;       \

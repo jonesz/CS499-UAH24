@@ -29,7 +29,14 @@ void fixed_alloc_init(uint32_t offset, size_t sz, size_t block_sz) {
   allocator.block_sz = block_sz;
 
   // Wipe the header information; everything is allocated.
-  memset((void *)allocator.offset, 0, allocator.sz / allocator.block_sz);
+  // TODO: This is fucking up.
+  // memset((void *)allocator.offset, 0, allocator.sz / allocator.block_sz);
+
+  uint8_t *header = (uint8_t *)offset;
+  for (unsigned int i = 0; i < header_sz(); i++) {
+    *header++ = 0;
+  }
+
   return;
 }
 
@@ -48,10 +55,10 @@ void *fixed_alloc(size_t sz) {
       header++; // Skip over existing allocated chunks.
     } else {
       *header = 1;
+      uint32_t a = (uint32_t)(allocator.offset + max_blocks + (i * allocator.block_sz));
       return (void *)(allocator.offset + max_blocks + (i * allocator.block_sz));
     }
   }
-
   return NULL;
 }
 

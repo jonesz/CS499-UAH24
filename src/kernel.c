@@ -1,7 +1,7 @@
 /** src/kernel.c */
 #include "sched/sched.h"
 #include "mem/kmalloc.h"
-#include "mem/buddy_alloc.h"
+#include "mem/fixed_alloc.h"
 #include "mem/multiboot.h"
 #include "vid/term.h"
 #include "interrupt/acpi.h"
@@ -15,6 +15,11 @@
 extern multiboot_info_t *boot_info;
 static void process_1();
 static void process_2();
+static void spin() {
+  while (1) {
+    volatile int a = 0;
+  }
+}
 
 void kernel_main() {
   term_init();
@@ -95,13 +100,20 @@ void kernel_main() {
     term_format("Table: %s\n", *((uint32_t **)&(rsdt->PointerToOtherSDT) + i));
   }
 
-  uint32_t p1 = (uint32_t) process_1;
-  uint32_t p2 = (uint32_t) process_2;
-  term_format("p1: %x\n", &p1);
-  term_format("p2: %x\n", &p2);
+  fixed_alloc_init(0x4000000, 4096 * 1000, 4096);
+  void *p1_stack = fixed_alloc(4096);
+  if (p1_stack == NULL) {
+    term_write("Unable to allocate mem.\n");
+    spin();
+  }
+  void *p2_stack = fixed_alloc(4096);
+  if (p2_stack == NULL) {
+    term_write("Unable to allocate mem.\n");
+    spin();
+  }
 
-  sched_admit((uint32_t)process_1);
-  sched_admit((uint32_t)process_2);
+  sched_admit((uint32_t)process_1, (uint32_t)p1_stack);
+  sched_admit((uint32_t)process_2, (uint32_t)p2_stack);
 
   init_pic();
 
