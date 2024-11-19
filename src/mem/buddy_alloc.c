@@ -1,5 +1,5 @@
 /**
- * `mem/buddy_alloc.c`, Ethan Jones <erj0005@uah.edu.>
+ * `mem/buddy_alloc.c`, Ethan Jones <erj0005@uah.edu>
  **/
 
 #include "mem/buddy_alloc.h"
