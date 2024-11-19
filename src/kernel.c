@@ -101,19 +101,8 @@ void kernel_main() {
   }
 
   fixed_alloc_init(0x4000000, 4096 * 1000, 4096);
-  void *p1_stack = fixed_alloc(4096);
-  if (p1_stack == NULL) {
-    term_write("Unable to allocate mem.\n");
-    spin();
-  }
-  void *p2_stack = fixed_alloc(4096);
-  if (p2_stack == NULL) {
-    term_write("Unable to allocate mem.\n");
-    spin();
-  }
-
-  sched_admit((uint32_t)process_1, (uint32_t)p1_stack);
-  sched_admit((uint32_t)process_2, (uint32_t)p2_stack);
+  sched_admit((uint32_t)process_1);
+  sched_admit((uint32_t)process_2);
 
   init_pic();
 

@@ -40,11 +40,7 @@ void fixed_alloc_init(uint32_t offset, size_t sz, size_t block_sz) {
   return;
 }
 
-void *fixed_alloc(size_t sz) {
-  if (sz > allocator.block_sz) {
-    return NULL;
-  }
-
+void *fixed_alloc() {
   size_t max_blocks = header_sz();
   size_t bound = header_bound();
 

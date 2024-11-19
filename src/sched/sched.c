@@ -1,5 +1,6 @@
 #include "sched/sched.h"
 #include "libc/string.h"
+#include "mem/fixed_alloc.h"
 #include "vid/term.h"
 
 static scheduler_t scheduler;
@@ -17,13 +18,16 @@ int sched_init() {
   return 0;
 }
 
-void sched_admit(uint32_t eip, uint32_t ebp) {
+void sched_admit(uint32_t eip) {
   for (int i = 0; i < MAX_PROCESSES; i++) {
     if (scheduler.process_table[i].state == PROCESS_UNUSED) {
-      // TODO: This might be borked; we're going to use the kernel's EFLAGS.
       scheduler.process_table[i].eip = eip;
-      scheduler.process_table[i].register_ctx.ebp = ebp;
-      scheduler.process_table[i].register_ctx.esp = ebp;
+
+      // Allocate some stack for this process. TODO: Hope this doesn't fail!
+      uint32_t stack = (uint32_t) fixed_alloc();
+      scheduler.process_table[i].register_ctx.ebp = stack;
+      scheduler.process_table[i].register_ctx.esp = stack;
+
       uint32_t eflags;
       asm volatile ("pushfl;\
                                     popl %%eax;       \
