@@ -1,4 +1,5 @@
 /** src/kernel.c */
+#include "sched/sched.h"
 #include "mem/kmalloc.h"
 #include "mem/buddy_alloc.h"
 #include "mem/multiboot.h"
@@ -9,8 +10,11 @@
 #include "test/test.h"
 #include <stddef.h>
 #include "libc/string.h"
+#include "syscalls/syscalls.h"
 
 extern multiboot_info_t *boot_info;
+static void process_1();
+static void process_2();
 
 void kernel_main() {
   term_init();
@@ -91,17 +95,60 @@ void kernel_main() {
     term_format("Table: %s\n", *((uint32_t **)&(rsdt->PointerToOtherSDT) + i));
   }
 
-  // TODO: What portion of the mem should the kernel heap be? Think of higher half stuff here.
-  buddy_alloc_init(0xFF000000, 0xFFFF0000);
+  uint32_t p1 = (uint32_t) process_1;
+  uint32_t p2 = (uint32_t) process_2;
+  term_format("p1: %x\n", &p1);
+  term_format("p2: %x\n", &p2);
 
-#ifndef RELEASE
-  test_all_functions();
-  term_write("\n");
-#endif
+  sched_admit((uint32_t)process_1);
+  sched_admit((uint32_t)process_2);
 
   init_pic();
 
   while (1) {
+
+    asm("mov $0x1337, %eax");
+    asm("mov $0x420, %ebx");
+    asm("mov $0x69, %ecx");
+    asm("mov $0x7, %edx");
     asm("nop");
+  }
+}
+
+volatile void process_1() {
+  volatile uint32_t idx = 0;
+  uint32_t overflows = 0;
+
+  char buf[MSG_T_MAX] = {0};
+  uint32_t buflen = MSG_T_MAX;
+  msg_t msg = {0};
+  msg.data = buf;
+  msg.length = buflen;
+
+  while (1) {
+    if (idx == 0) {
+      //term_format("process 1: overflowed %x times\n", &overflows);
+  
+      overflows += 1;
+    }
+    // TODO(Britton): An unknown bug causes this to result in an "Invalid Opcode" on some builds,
+    // Diagnose and fix
+    if(recv(&msg, 0)) {
+      term_format("RECV: %s", msg.data);
+    }
+    idx = (idx + 1) & 0xFFFFFF;
+  }
+}
+
+volatile void process_2() {
+  volatile uint32_t idx = 0;
+  uint32_t overflows = 0;
+  while (1) {
+    if (idx == 0) {
+      //term_format("process 2: overflowed %x times\n", &overflows);
+      overflows += 1;
+    }
+
+    idx = (idx + 1) & 0xFFFFFF;
   }
 }

@@ -8,30 +8,62 @@
 #include "interrupt/interrupt.h"
 #include "interrupt/asm_tools.h"
 #include "interrupt/isr.h"
+#include "interrupt/key_handler.h"
+#include "sched/sched.h"
+#include "syscalls/syscalls.h"
+#include "syscalls/syscalls_internal.h"
 #include "vid/term.h"
 
-// TODO: At some point, this should be shared mem between the scheduler and the timer.
+// TODO: At some point, this should be shared mem between the scheduler and the
+// timer.
 uint32_t counter = 0;
 
 #define MAX_IDT_ENTRIES 256
 static void idt_set_descriptor(int idx, void *isr, uint8_t flags);
-static void key_handler(uint32_t int_num);
-static void timer_handler();
+
+static void timer_handler(uint32_t stack_loc);
 
 extern void *isr;
 static idt_descriptor_t idt_desc;
 __attribute__((
     aligned(0x10))) static idt_gate_descriptor_t idt_table[MAX_IDT_ENTRIES];
 
-void interrupt_handler(uint32_t int_num) {
+void interrupt_handler(uint32_t int_num, uint32_t stack_pos) {
   switch (int_num) {
   case KEYBOARD_ISR: {
+    // TODO(Britton): When sched is reasonably functional, the key handler
+    // should ideally be its own process, so this should change from a static
+    // call to an 'interrupt received' unblock on the key handler process
     key_handler(int_num);
   } break;
 
   case TIMER_ISR:
-     timer_handler();
-     break;
+    timer_handler(stack_pos);
+    break;
+
+  case GENERAL_PROTECTION_ERROR:
+    term_write("Protection Fault\n");
+    uint32_t error_code = *(uint32_t *)(stack_pos + 4);
+    term_format("ERRORCODE: %x\n", &error_code);
+    uint32_t EIP = *(uint32_t *)(stack_pos + 8);
+    term_format("EIP: %x\n", &EIP);
+    uint32_t EFLAGS = *(uint32_t *)(stack_pos + 14);
+    term_format("EFLAGS: %x\n", &EFLAGS);
+    while (1) {
+      volatile int b = 0;
+    }
+    break;
+  case SWINT_ISR:
+    syscall_info_t *eax =
+        (syscall_info_t *)(*(uint32_t *)(stack_pos - (4 * 0)));
+    handle_syscall(*eax);
+    break;
+  case 0x6:
+    term_write("INVALID OPCODE?\n");
+    while (1) {
+      volatile int b = 0;
+    }
+    break;
 
   default: {
     term_format("Got interrupt %x.\n", &int_num);
@@ -39,18 +71,9 @@ void interrupt_handler(uint32_t int_num) {
   }
 }
 
-void key_handler(uint32_t int_num) {
-
-  // TODO(BP): All keyboard I/O should go through a driver
-  // Get scan code from keyboard
-  uint32_t scan_code = inb(0x60);
-  term_format("Key Interrupt %x\n", &scan_code);
-  // Tell PIC that the IRQ was handled
-  outb(MPIC_CMD, 0x20);
-}
-
-void timer_handler() {
+void timer_handler(uint32_t stack_loc) {
   counter += 1;
+  sched_interrupt(counter, stack_loc);
   outb(MPIC_CMD, 0x20);
 }
 
@@ -111,9 +134,6 @@ void init_pic() {
   io_wait();
 
   // Set the IRQ mask
-  // NOTE(BP): The mask I currently set only disables timer interrupts,
-  // In my testing the timer was spamming interrupts and causing a headache,
-  // So this will need to be changed when we actually want to use the timer.
   outb(MPIC_DAT, 0x0);
   outb(SPIC_DAT, 0x0);
   io_wait();

@@ -32,6 +32,7 @@ contain the index of the PD entry which points to X's PT
 Put concisely:
 (PD(i).addr->PT(j).addr + k)->X
  */
+#include <mem/multiboot.h>
 #include <stdint.h>
 
 // TODO (Britton): Explain all this
@@ -55,7 +56,6 @@ typedef struct _PageDirectory PageDirectory;
 typedef struct _PageTable PageTable;
 typedef union _PageDirectoryEntry PageDirectoryEntry;
 typedef union _PageTableEntry PageTableEntry;
-typedef struct _MemInfo MemInfo;
 
 // Global variable
 static uint32_t *pages[Megabytes(1)];
@@ -88,6 +88,8 @@ struct _PageDirectory {
 struct _PageTable {
   PageTableEntry entries[1024];
 };
+
+extern multiboot_info_t *boot_info;
 
 uint32_t get_page_directory_index(void *ptr) {
   uint32_t mask = 0xFFC00000;
@@ -129,7 +131,7 @@ void page_map_identity(PageDirectory *page_directory, PageTable *page_tables) {
 
 // Initializes paging to be used by the operating system
 // Paging should be disabled during initialization
-void init_paging(MemInfo *mem_info, PageDirectory *page_directory) {
+void init_paging(PageDirectory *page_directory) {
 
   // TODO(Britton): Use mem_info to identity page or otherwise smartly set up:
   // mmaped I/O, kernel memory, etc
@@ -140,13 +142,30 @@ void init_paging(MemInfo *mem_info, PageDirectory *page_directory) {
   page_directory->entries[1023].entry = (uint32_t)page_directory;
   page_directory->entries[1023].flags = PAGE_PRESENT | PAGE_ALLOW_WRITE;
 
+  // Select the memory region to use for paging
+  uint8_t *mmap = (uint8_t *)boot_info->mmap_addr;
+  uint8_t *cur = mmap;
+  uint32_t biggest_region_size = 0;
+  uint8_t *biggest_region = 0;
+  while (cur < mmap + boot_info->mmap_length) {
+    uint64_t *base = (uint64_t *)(cur + 4);
+    uint64_t *length = (uint64_t *)(cur + 8 + 4);
+    uint32_t *flags = (uint32_t *)(cur + 16 + 4);
+    if (*flags == 1) {
+      if (*length > biggest_region_size) {
+        biggest_region = (uint8_t *)*base;
+        biggest_region_size = *length;
+      }
+    }
+    cur += *(uint64_t *)cur + 4;
+  }
   // Fill 'pages' with all available physical addresses of pages
   for (uint32_t i = 0; i < (sizeof(pages) / sizeof(pages[0])); i++) {
 
     // TODO(Britton): Use mem_info to determine which pages are unavailable
     // For the rest, put an entry in 'pages'
-    if (mem_info) {
-      pages[i] = 0;
+    if (biggest_region + 4096 * i < biggest_region + biggest_region_size) {
+      pages[i] = (uint32_t *)(biggest_region + 4096 * i);
     }
   }
 }
