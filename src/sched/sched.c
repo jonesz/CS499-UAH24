@@ -1,6 +1,7 @@
 #include "sched/sched.h"
 #include "libc/string.h"
 #include "mem/fixed_alloc.h"
+#include "syscalls/syscalls.h"
 #include "vid/term.h"
 
 static scheduler_t scheduler;
@@ -8,6 +9,8 @@ static scheduler_t scheduler;
 static void dispatch_interrupt(uint32_t stack_loc);
 static void sched_interrupt_store(unsigned int idx, uint32_t stack_loc);
 static void sched_interrupt_replace(unsigned int idx, uint32_t stack_loc);
+
+static void exit_stub();
 
 // Define the round-robin time slice.
 #define TIME_SLICE_CONSTANT 4
@@ -23,10 +26,18 @@ void sched_admit(uint32_t eip) {
     if (scheduler.process_table[i].state == PROCESS_UNUSED) {
       scheduler.process_table[i].eip = eip;
 
-      // Allocate some stack for this process. TODO: Hope this doesn't fail!
       uint32_t stack = (uint32_t) fixed_alloc();
+      // Without some `libcrt` type linker where `exit()` is linked at the end of `main`, we need
+      // a way to trigger de-allocation of the process. Place an "exit stub" at the end which after
+      // return, the program should fall to (this is what BP wanted; I disagree).
+      *(uint32_t *)stack = (uint32_t) &exit_stub;
+
       scheduler.process_table[i].register_ctx.ebp = stack;
       scheduler.process_table[i].register_ctx.esp = stack;
+      scheduler.process_table[i].stack_addr = stack;
+
+      scheduler.process_table[i].register_ctx.cs = 0x8; // TODO: fix this later.
+      scheduler.process_table[i].state = PROCESS_READY;
 
       uint32_t eflags;
       asm volatile ("pushfl;\
@@ -36,11 +47,21 @@ void sched_admit(uint32_t eip) {
                                     ); 
 
       scheduler.process_table[i].register_ctx.EFLAGS = eflags;
-      scheduler.process_table[i].register_ctx.cs = 0x8; // TODO: fix this later.
-      scheduler.process_table[i].state = PROCESS_READY;
       return;
     }
   }
+}
+
+// Called from a `Sys_Exit` interrupt.
+void sched_kill(uint32_t stack_loc) {
+  for (int i = 0; i < MAX_PROCESSES; i++) {
+    if (scheduler.process_table[i].state == PROCESS_RUNNING) {
+      fixed_free(scheduler.process_table[i].stack); // De-allocate the stack.
+      scheduler.process_table[i].state == PROCESS_UNUSED;
+      dispatch_interrupt(stack_loc); // Place a new process onto the stack.
+    }
+  }
+  return 0;
 }
 
 // Handle an interrupt.
@@ -66,7 +87,6 @@ static void dispatch_interrupt(uint32_t stack_loc) {
     sched_interrupt_replace(0, stack_loc);
     scheduler.process_table[0].state = PROCESS_RUNNING;
     uint32_t eip = *(uint32_t *)(stack_loc + 4);
-    term_format("UNABLE TO FIND RUNNING PROCESS; EIP: %x\n", &eip);
     return;
   }
 
@@ -141,4 +161,8 @@ static void sched_interrupt_replace(unsigned int idx, uint32_t stack_loc) {
   *ebp = scheduler.process_table[idx].register_ctx.ebp;
   *esi = scheduler.process_table[idx].register_ctx.esi;
   *edi = scheduler.process_table[idx].register_ctx.edi;
+}
+
+static void exit_stub() {
+  exit(); // Call the exit() syscall.
 }

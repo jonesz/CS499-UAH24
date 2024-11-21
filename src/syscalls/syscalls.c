@@ -38,12 +38,20 @@ uint32_t recv(msg_t* msg_dest, uint32_t comm_channel) {
     }
     return 0;
 }
+
 uint32_t sleep(uint32_t ticks) {
     sleep_args_t args = {0};
     args.ticks = ticks;
     syscall_info_t syscall_info = {0};
     syscall_info.args = &args;
     syscall_info.id = Sys_Sleep;
+    swint(&syscall_info);
+    return 1;
+}
+
+uint32_t exit() {
+    syscall_info_t syscall_info = {0};
+    syscall_info.id = Sys_Exit;
     swint(&syscall_info);
     return 1;
 }
@@ -93,6 +101,9 @@ void handle_syscall(syscall_info_t info) {
         term_format("%x\n", &ticks);
     }
     break;
+
+    case Sys_Exit:
+        break;
 
     default:
     term_write("Unk\n");
