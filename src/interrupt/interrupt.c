@@ -53,11 +53,11 @@ void interrupt_handler(uint32_t int_num, uint32_t stack_pos) {
       volatile int b = 0;
     }
     break;
+
   case SWINT_ISR:
-    syscall_info_t *eax =
-        (syscall_info_t *)(*(uint32_t *)(stack_pos - (4 * 0)));
-    handle_syscall(*eax);
+    handle_syscall(stack_pos);
     break;
+
   case 0x6:
     term_write("INVALID OPCODE?\n");
     while (1) {

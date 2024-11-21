@@ -56,12 +56,12 @@ void sched_admit(uint32_t eip) {
 void sched_kill(uint32_t stack_loc) {
   for (int i = 0; i < MAX_PROCESSES; i++) {
     if (scheduler.process_table[i].state == PROCESS_RUNNING) {
-      fixed_free(scheduler.process_table[i].stack); // De-allocate the stack.
+      fixed_free((void *)scheduler.process_table[i].stack_addr); // De-allocate the stack.
       scheduler.process_table[i].state == PROCESS_UNUSED;
       dispatch_interrupt(stack_loc); // Place a new process onto the stack.
+      return;
     }
   }
-  return 0;
 }
 
 // Handle an interrupt.

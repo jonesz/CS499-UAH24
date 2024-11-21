@@ -1,5 +1,6 @@
 #include "syscalls/syscalls.h"
 #include "syscalls/syscalls_internal.h"
+#include "sched/sched.h"
 #include <stdint.h>
 #include "vid/term.h"
 
@@ -56,7 +57,10 @@ uint32_t exit() {
     return 1;
 }
 
-void handle_syscall(syscall_info_t info) {
+void handle_syscall(uint32_t stack_loc) {
+    syscall_info_t info =
+        *(syscall_info_t *)(*(uint32_t *)(stack_loc - (4 * 0)));
+
     switch (info.id)
     {
     case Sys_Send:
@@ -106,7 +110,7 @@ void handle_syscall(syscall_info_t info) {
         break;
 
     default:
-    term_write("Unk\n");
+    term_write("Unk: ");
         break;
     }
 }
