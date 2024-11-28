@@ -79,7 +79,10 @@ void handle_syscall(uint32_t stack_loc) {
             }
             msg_length = length;
             msg_present = 1;
-            //term_format("SYS_SEND: %s\n", msg_buf);
+            // If the comm channel is to STDOUT, write it to STDOUT.
+            if (args->comm_channel == STDOUT) {
+                term_format("%s", msg_buf);
+            }
         }
     }
         break;

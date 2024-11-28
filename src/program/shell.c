@@ -1,20 +1,31 @@
 #include "syscalls/syscalls.h"
 #include "libc/string.h"
 
-int shell_main(int argc, char **argv) {
-  char buf[256];
-  // write()
-  
-  while (1) {
-    // TODO: Write a RECV instruction.
-    // recv();
+static void printf(char *buf) {
+  msg_t msg = {0};
+  msg.data = buf;
+  msg.length = strlen(buf);
+  send(&msg, STDOUT);
+}
 
-    // TODO: Determine
-    if (strcmp("echo", buf) == 0) {
-      
+static uint32_t read(char *buf, size_t len) {
+  msg_t msg = {0};
+  msg.data = buf;
+  msg.length = len;
+  return recv(&msg, STDIN);
+}
+
+int shell_main(int argc, char **argv) {
+  char buf[MSG_T_MAX] = {0};
+    
+  while (1) {
+    printf(">");
+    if (read(buf, MSG_T_MAX)) {
+      if (strcmp("echo", buf) == 0) {
+        // FORK and spawn echo with the rest of the parameters.
+      }
     } else {
-      // TODO: Construct a write syscall.
-      // write();
+      // DO NOTHING.
     }
   }
 }
