@@ -129,13 +129,12 @@ volatile void process_1() {
   while (1) {
     if (idx == 0) {
       //term_format("process 1: overflowed %x times\n", &overflows);
-  
+      
       overflows += 1;
     }
-    // TODO(Britton): An unknown bug causes this to result in an "Invalid Opcode" on some builds,
-    // Diagnose and fix
+    // NOTE(Britton): Checks if a message is available and prints it if there is one
     if(recv(&msg, 0)) {
-      term_format("RECV: %s", msg.data);
+     term_format("RECV: %s", msg.data);
     }
     idx = (idx + 1) & 0xFFFFFF;
   }

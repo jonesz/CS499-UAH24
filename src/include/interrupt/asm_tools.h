@@ -14,4 +14,18 @@ static inline uint8_t inb(uint16_t port) {
 
 static inline void io_wait() { outb(0x80, 0); }
 
+static inline uint32_t get_esp() {
+  uint32_t ret;
+  __asm__ volatile("mov %%esp, %d0" : "=a"(ret));
+  return ret;
+}
+static inline uint32_t get_eflags() {
+  uint32_t ret;
+  asm volatile ("pushf;\
+                                    pop %%eax;       \
+                                    mov %%eax, %0;"  \
+                                    :"=m" (ret)     \
+                                    ); 
+  return ret;
+}
 #endif

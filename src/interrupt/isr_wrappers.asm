@@ -18,6 +18,7 @@ isr%1:
         pop eax
         pop eax
         popad
+        mov esp, [esp - 20] ; popad does not restore the old stack pointer, so it must be manually restored here
         sti
         iret
 %endmacro
