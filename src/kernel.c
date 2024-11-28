@@ -11,13 +11,12 @@
 #include <stddef.h>
 #include "libc/string.h"
 #include "syscalls/syscalls.h"
+#include "program/program.h"
 
 extern multiboot_info_t *boot_info;
-static void process_1();
-static void process_2();
 static void spin() {
   while (1) {
-    volatile int a = 0;
+    asm("nop");
   }
 }
 
@@ -101,55 +100,51 @@ void kernel_main() {
   }
 
   fixed_alloc_init(0x4000000, 4096 * 1000, 4096);
-  sched_admit((uint32_t)process_1);
-  sched_admit((uint32_t)process_2);
+  sched_admit((uint32_t)shell_main);
+  // Include a do-nothing process so if the shell blocks, we can still jump to a process that does something.
+  sched_admit((uint32_t)spin);
 
   init_pic();
 
   while (1) {
-
-    asm("mov $0x1337, %eax");
-    asm("mov $0x420, %ebx");
-    asm("mov $0x69, %ecx");
-    asm("mov $0x7, %edx");
     asm("nop");
   }
 }
 
-volatile void process_1() {
-  volatile uint32_t idx = 0;
-  uint32_t overflows = 0;
-
-  char buf[MSG_T_MAX] = {0};
-  uint32_t buflen = MSG_T_MAX;
-  msg_t msg = {0};
-  msg.data = buf;
-  msg.length = buflen;
-
-  while (1) {
-    if (idx == 0) {
-      //term_format("process 1: overflowed %x times\n", &overflows);
-  
-      overflows += 1;
-    }
-    // TODO(Britton): An unknown bug causes this to result in an "Invalid Opcode" on some builds,
-    // Diagnose and fix
-    if(recv(&msg, 0)) {
-      term_format("RECV: %s", msg.data);
-    }
-    idx = (idx + 1) & 0xFFFFFF;
-  }
-}
-
-volatile void process_2() {
-  volatile uint32_t idx = 0;
-  uint32_t overflows = 0;
-  while (1) {
-    if (idx == 0) {
-      //term_format("process 2: overflowed %x times\n", &overflows);
-      overflows += 1;
-    }
-
-    idx = (idx + 1) & 0xFFFFFF;
-  }
-}
+// volatile void process_1() {
+//   volatile uint32_t idx = 0;
+//   uint32_t overflows = 0;
+// 
+//   char buf[MSG_T_MAX] = {0};
+//   uint32_t buflen = MSG_T_MAX;
+//   msg_t msg = {0};
+//   msg.data = buf;
+//   msg.length = buflen;
+// 
+//   while (1) {
+//     if (idx == 0) {
+//       //term_format("process 1: overflowed %x times\n", &overflows);
+//   
+//       overflows += 1;
+//     }
+//     // TODO(Britton): An unknown bug causes this to result in an "Invalid Opcode" on some builds,
+//     // Diagnose and fix
+//     if(recv(&msg, 0)) {
+//       term_format("RECV: %s", msg.data);
+//     }
+//     idx = (idx + 1) & 0xFFFFFF;
+//   }
+// }
+// 
+// volatile void process_2() {
+//   volatile uint32_t idx = 0;
+//   uint32_t overflows = 0;
+//   while (1) {
+//     if (idx == 0) {
+//       //term_format("process 2: overflowed %x times\n", &overflows);
+//       overflows += 1;
+//     }
+// 
+//     idx = (idx + 1) & 0xFFFFFF;
+//   }
+// }
