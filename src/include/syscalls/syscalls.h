@@ -2,8 +2,11 @@
 #define SYSCALLS_H
 
 #include <stdint.h>
+#include "sched/sched.h"
 
 #define MSG_T_MAX 1024
+#define STDOUT (MAX_PROCESSES + 1)
+#define STDIN  (MAX_PROCESSES + 2)
 
 typedef enum _syscall_id_t syscall_id_t;
 typedef struct _syscall_info_t syscall_info_t;
