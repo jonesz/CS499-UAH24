@@ -16,7 +16,7 @@ $(TARGET): $(OBJECT)
 .PHONY: clean format
 
 format:
-	clang-format -i *.c
+	clang-format -i *.c *.h
 
 clean:
 	$(RM) $(OBJECT) $(TARGET)
