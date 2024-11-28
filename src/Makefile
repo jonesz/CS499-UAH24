@@ -8,10 +8,13 @@ INCLUDE=include/
 
 all: kernel.bin kernel.iso
 
-kernel.bin: boot.o kernel.o mem/libmem.a interrupt/libinterrupt.a vid/libvid.a test/libtest.a sched/libsched.a syscalls/libsyscalls.a ipc/libipc.a libk.a
+kernel.bin: boot.o kernel.o mem/libmem.a interrupt/libinterrupt.a vid/libvid.a test/libtest.a sched/libsched.a syscalls/libsyscalls.a ipc/libipc.a program/libprogram.a libk.a
 	$(CC) -T linker.ld -o $@ -ffreestanding -O2 -nostdlib $^ -lgcc $(DEF) -I$(INCLUDE)
 
-.PHONY: mem/libmem.a vid/libvid.a interrupt/libinterrupt.a test/libtest.a sched/libsched.a syscalls/libsyscalls.a ipc/libipc.a
+.PHONY: mem/libmem.a vid/libvid.a interrupt/libinterrupt.a test/libtest.a sched/libsched.a syscalls/libsyscalls.a ipc/libipc.a program/libprogram.a
+
+program/libprogram.a:
+	+$(MAKE) -C program
 
 ipc/libipc.a:
 	+$(MAKE) -C ipc
@@ -59,6 +62,7 @@ start-iso: kernel.iso
 .PHONY: clean format
 
 clean:
+	+$(MAKE) -C program clean
 	+$(MAKE) -C ipc clean
 	+$(MAKE) -C syscalls clean
 	+$(MAKE) -C sched clean
@@ -69,6 +73,7 @@ clean:
 	$(RM) *.o *.a *.iso *.bin
 
 format:
+	+$(MAKE) -C program format
 	+$(MAKE) -C ipc format
 	+$(MAKE) -C syscalls format
 	+$(MAKE) -C sched format
