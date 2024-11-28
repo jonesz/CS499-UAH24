@@ -1,5 +1,6 @@
 #include "syscalls/syscalls.h"
 #include "libc/string.h"
+#include "program/program.h"
 
 static void printf(char *buf) {
   msg_t msg = {0};
