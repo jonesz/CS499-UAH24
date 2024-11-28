@@ -10,7 +10,7 @@ typedef struct _syscall_info_t syscall_info_t;
 
 typedef struct _msg_t msg_t;
 
-enum _syscall_id_t {Sys_Send, Sys_Recv, Sys_Sleep, Sys_Exit};
+enum _syscall_id_t {Sys_Send, Sys_Recv, Sys_Sleep, Sys_Exit, Sys_Write};
 
 struct  _syscall_info_t {
     void* args;
@@ -27,5 +27,6 @@ uint32_t send(msg_t* msg, uint32_t comm_channel);
 uint32_t recv(msg_t* msg_dest, uint32_t comm_channel);
 uint32_t sleep(uint32_t ticks);
 uint32_t exit();
+uint32_t write(msg_t* msg);
 
 #endif

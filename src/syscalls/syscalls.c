@@ -57,6 +57,11 @@ uint32_t exit() {
     return 1;
 }
 
+uint32_t write(msg_t* msg) {
+    // TODO: Implement a "write" syscall.
+    return 1;
+}
+
 void handle_syscall(uint32_t stack_loc) {
     syscall_info_t info =
         *(syscall_info_t *)(*(uint32_t *)(stack_loc - (4 * 0)));
