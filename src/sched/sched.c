@@ -109,6 +109,28 @@ static void dispatch_interrupt(uint32_t stack_loc) {
   }
 }
 
+// Block the current process.
+void sched_block(uint32_t stack_loc) {
+
+  // Find the current process that's running.
+  int cur;
+  for (int i = 0; i < MAX_PROCESSES; i++) {
+    if (scheduler.process_table[i].state == PROCESS_RUNNING) {
+      cur = i;
+      break;
+    }
+  }
+
+  // Swap to another process.
+  dispatch_interrupt(stack_loc);
+
+  // Set the old process as blocked.
+  scheduler.process_table[cur].state = PROCESS_BLOCKED;
+  return;
+}
+
+void sched_unblock();
+
 static void sched_interrupt_store(unsigned int idx, uint32_t stack_loc) {
   uint32_t EFLAGS = *(uint32_t *)(stack_loc + 12);
   uint32_t cs  = *(uint32_t *)(stack_loc + 8);

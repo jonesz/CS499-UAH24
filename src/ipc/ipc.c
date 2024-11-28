@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+
 /*
  * A ringbuffer that won't let the `read_ptr` advance past the `write_ptr` (and
  * by the same token, won't allow the `write_ptr` to advance past the
@@ -24,7 +25,7 @@ void ringbuffer_init(ringbuffer_t *rb) {
 
 int ringbuffer_write(ringbuffer_t *rb, uint8_t byte) {
   if ((rb->w_ptr + 1) % RINGBUFFER_SIZE == rb->r_ptr) {
-    return -1; // The buffer is full.
+    return 1; // The buffer is full.
   }
 
   rb->buf[rb->w_ptr] = byte;
@@ -35,7 +36,7 @@ int ringbuffer_write(ringbuffer_t *rb, uint8_t byte) {
 int ringbuffer_write_bytes(ringbuffer_t *rb, uint8_t *buf, size_t len) {
   for (int i = 0; i < len; i++) {
     if ((rb->w_ptr + i) % RINGBUFFER_SIZE == rb->r_ptr) {
-      return -1; // The buffer is full and can't hold what needs to be written.
+      return 1; // The buffer is full and can't hold what needs to be written.
     }
   }
 
@@ -48,7 +49,7 @@ int ringbuffer_write_bytes(ringbuffer_t *rb, uint8_t *buf, size_t len) {
 
 int ringbuffer_read(ringbuffer_t *rb, uint8_t *buf) {
   if (rb->r_ptr == rb->w_ptr) {
-    return -1; // There's nothing to read from the buffer.
+    return 1; // There's nothing to read from the buffer.
   }
 
   *buf = rb->buf[rb->r_ptr];

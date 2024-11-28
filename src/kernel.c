@@ -12,6 +12,7 @@
 #include "libc/string.h"
 #include "syscalls/syscalls.h"
 #include "program/program.h"
+#include "ipc/ipc.h"
 
 extern multiboot_info_t *boot_info;
 static void spin() {
@@ -99,6 +100,7 @@ void kernel_main() {
     term_format("Table: %s\n", *((uint32_t **)&(rsdt->PointerToOtherSDT) + i));
   }
 
+  ipc_init();
   fixed_alloc_init(0x4000000, 4096 * 1000, 4096);
   sched_admit((uint32_t)shell_main);
   // Include a do-nothing process so if the shell blocks, we can still jump to a process that does something.
