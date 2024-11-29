@@ -34,7 +34,7 @@ int ringbuffer_write(ringbuffer_t *rb, uint8_t byte) {
 }
 
 int ringbuffer_write_bytes(ringbuffer_t *rb, uint8_t *buf, size_t len) {
-  for (int i = 0; i < len; i++) {
+  for (int i = 1; i < len + 1; i++) {
     if ((rb->w_ptr + i) % RINGBUFFER_SIZE == rb->r_ptr) {
       return 1; // The buffer is full and can't hold what needs to be written.
     }
