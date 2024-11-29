@@ -59,7 +59,7 @@ void handle_syscall(uint32_t stack_loc) {
         char* src = args->msg->data;
 
         // If the comm_channel is STDOUT, go ahead and write it to the screen.
-        if (args->comm_channel = STDOUT) {
+        if (args->comm_channel == STDOUT) {
             for (int i = 0; i < length && i < MSG_T_MAX; i++) {
                 term_write_char(&src[i]);
             }
@@ -69,6 +69,8 @@ void handle_syscall(uint32_t stack_loc) {
             // TODO: This might not be needed if we go ahead and just write to STDIN from the keyboard driver.
             if (args->comm_channel == STDIN) {
                 *eax = ringbuffer_write_bytes(&ipc_stdin, src, length);
+                // We wrote to STDIN, we'll go ahead and block everything.
+                sched_unblock();
                 return;
             } else if (args->comm_channel > MAX_PROCESSES) {
                 *eax = 1; 
@@ -88,17 +90,19 @@ void handle_syscall(uint32_t stack_loc) {
             uint8_t *dst = args->msg_dest->data;
             // Check if there's a message within STDIN to read, if there's not, block.
             if (ringbuffer_read(&ipc_stdin, dst)) {
-                // There was no message, block the currently running process and return 1.
-                sched_block(stack_loc);
+                // TODO: There was no message, block the currently running process and return 1.
+                // sched_block(stack_loc);
                 *eax = 1;
                 return;
             } else {
+                term_write("Does this ever get called\n");
                 int i = 1; // We've read a single bit.
                 while (ringbuffer_read(&ipc_stdin, (dst + i)) && i < MSG_T_MAX) {
                     i++;
                 }
                 args->msg_dest->length = i;
                 *eax = 0;
+                term_write("Read a message from STDIN.\n");
                 return;
             }
         } else {

@@ -4,6 +4,7 @@
 #include "syscalls/syscalls.h"
 #include "vid/term.h"
 #include <stdint.h>
+#include "sched/sched.h"
 
 static uint32_t state_flags;
 static char msg[MSG_MAX + 1];
@@ -75,7 +76,6 @@ void key_handler(uint32_t int_num) {
     }
 
     if (ascii_char[0]) {
-
       // Force the message to end if this character would fill the buffer
       if (msg_index >= MSG_MAX - 1) {
         ascii_char[0] = '\n';
@@ -92,10 +92,10 @@ void key_handler(uint32_t int_num) {
         sys_msg.data = msg;
         sys_msg.length = msg_index + 1;
 
-        if (send(&sys_msg, 0)) {
-          // Send success
+        if (send(&sys_msg, STDIN)) {
+          term_write("key_handler.c: Was able to write to STDIN.\n");
         } else {
-          // Send failure (system msg buffer full)
+          term_write("key_handler.c: Wasn't able to write to STDIN.\n");
         }
 
         for (uint32_t i = 0; i <= msg_index; i++) {

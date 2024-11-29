@@ -111,7 +111,7 @@ static void dispatch_interrupt(uint32_t stack_loc) {
 
 // Block the current process.
 void sched_block(uint32_t stack_loc) {
-
+  term_write("sched/sched.c: blocking...\n");
   // Find the current process that's running.
   int cur;
   for (int i = 0; i < MAX_PROCESSES; i++) {
@@ -129,7 +129,16 @@ void sched_block(uint32_t stack_loc) {
   return;
 }
 
-void sched_unblock();
+// Go ahead and unblock everything.
+void sched_unblock() {
+  term_write("sched/sched.c: unblocking...\n");
+  for (int i = 0; i < MAX_PROCESSES; i++) {
+    if (scheduler.process_table[i].state == PROCESS_BLOCKED) {
+      scheduler.process_table[i].state == PROCESS_READY;
+    }
+  }
+  return;
+}
 
 static void sched_interrupt_store(unsigned int idx, uint32_t stack_loc) {
   uint32_t EFLAGS = *(uint32_t *)(stack_loc + 12);
