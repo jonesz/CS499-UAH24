@@ -64,10 +64,12 @@ void handle_syscall(uint32_t stack_loc) {
                 term_write_char(&src[i]);
             }
             *eax = 0;
+            return;
         } else { 
             // TODO: This might not be needed if we go ahead and just write to STDIN from the keyboard driver.
             if (args->comm_channel == STDIN) {
                 *eax = ringbuffer_write_bytes(&ipc_stdin, src, length);
+                return;
             } else if (args->comm_channel > MAX_PROCESSES) {
                 *eax = 1; 
                 return;
@@ -80,20 +82,28 @@ void handle_syscall(uint32_t stack_loc) {
     case Sys_Recv:
     {
         recv_args_t* args = info.args;
-        // if (args->comm_channel == STDIN) {
-        //     // *eax = ringbuffer_write_bytes(&ipc_stdin, )
-        // }
 
-        // if (ringbuffer_read()) {
-        //     char* dest = args->msg_dest->data;
-        //     for (uint32_t i = 0; i < msg_length && i < MSG_T_MAX; i++) {
-        //         dest[i] = msg_buf[i];
-        //     }
-        //     args->msg_dest->length = msg_length;
-        // } else {
-        //     // There's no message able to be received, block the process.
-        //    sched_block(stack_loc);
-        // }
+        // Attempt to read from STDIN.
+        if (args->comm_channel == STDIN) {
+            uint8_t *dst = args->msg_dest->data;
+            // Check if there's a message within STDIN to read, if there's not, block.
+            if (ringbuffer_read(&ipc_stdin, dst)) {
+                // There was no message, block the currently running process and return 1.
+                sched_block(stack_loc);
+                *eax = 1;
+                return;
+            } else {
+                int i = 1; // We've read a single bit.
+                while (ringbuffer_read(&ipc_stdin, (dst + i)) && i < MSG_T_MAX) {
+                    i++;
+                }
+                args->msg_dest->length = i;
+                *eax = 0;
+                return;
+            }
+        } else {
+            // TODO Handle other.
+        }
     }
     break;
 
