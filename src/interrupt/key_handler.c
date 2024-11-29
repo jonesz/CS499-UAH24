@@ -92,10 +92,10 @@ void key_handler(uint32_t int_num) {
         sys_msg.data = msg;
         sys_msg.length = msg_index + 1;
 
-        if (send(&sys_msg, STDIN)) {
-          term_write("key_handler.c: Was able to write to STDIN.\n");
+        if (!send(&sys_msg, STDIN)) {
+          // TODO: Handle the failure.
         } else {
-          term_write("key_handler.c: Wasn't able to write to STDIN.\n");
+          // TODO: Handle the success.
         }
 
         for (uint32_t i = 0; i <= msg_index; i++) {

@@ -91,18 +91,16 @@ void handle_syscall(uint32_t stack_loc) {
             // Check if there's a message within STDIN to read, if there's not, block.
             if (ringbuffer_read(&ipc_stdin, dst)) {
                 // TODO: There was no message, block the currently running process and return 1.
-                // sched_block(stack_loc);
+                sched_block(stack_loc);
                 *eax = 1;
                 return;
             } else {
-                term_write("Does this ever get called\n");
                 int i = 1; // We've read a single bit.
-                while (ringbuffer_read(&ipc_stdin, (dst + i)) && i < MSG_T_MAX) {
+                while (!ringbuffer_read(&ipc_stdin, (dst + i)) && i < MSG_T_MAX) {
                     i++;
                 }
                 args->msg_dest->length = i;
                 *eax = 0;
-                term_write("Read a message from STDIN.\n");
                 return;
             }
         } else {

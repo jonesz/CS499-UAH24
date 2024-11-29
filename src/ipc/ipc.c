@@ -7,7 +7,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-
 /*
  * A ringbuffer that won't let the `read_ptr` advance past the `write_ptr` (and
  * by the same token, won't allow the `write_ptr` to advance past the

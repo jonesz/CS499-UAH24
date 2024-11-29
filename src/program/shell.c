@@ -1,6 +1,7 @@
-#include "syscalls/syscalls.h"
 #include "libc/string.h"
 #include "program/program.h"
+#include "syscalls/syscalls.h"
+#include "vid/term.h"
 
 static void printf(char *buf) {
   msg_t msg = {0};
@@ -17,23 +18,21 @@ static uint32_t read(char *buf, size_t len) {
   while (result) {
     result = recv(&msg, STDIN);
   }
-  printf("Returning from READ.\n");
 
-  return 1;
+  return msg.length;
 }
 
 int shell_main(int argc, char **argv) {
   char buf[MSG_T_MAX] = {0};
-    
+
   while (1) {
-    printf("> ");
+    printf("\n> ");
     if (read(buf, MSG_T_MAX)) {
-      printf("Ain't that something.\n");
-      if (strcmp("echo", buf) == 0) {
-        // FORK and spawn echo with the rest of the parameters.
+      if (strcmp("echo\n", buf) == 0) {
         printf("Spawning echo...\n");
+      } else {
+        printf("Unrecognized command.");
       }
-    } else {
     }
   }
 }
