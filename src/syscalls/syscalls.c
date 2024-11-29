@@ -65,12 +65,10 @@ void handle_syscall(uint32_t stack_loc) {
             }
             *eax = 0;
         } else { 
+            // TODO: This might not be needed if we go ahead and just write to STDIN from the keyboard driver.
             if (args->comm_channel == STDIN) {
-                *eax = ringbuffer_write_bytes(&ipc_stdin)
-                
-            }
-            // Attempt to write to write to the appropriate IPC channel.
-            if (args->comm_channel > MAX_PROCESSES) {
+                *eax = ringbuffer_write_bytes(&ipc_stdin, src, length);
+            } else if (args->comm_channel > MAX_PROCESSES) {
                 *eax = 1; 
                 return;
             }
@@ -82,20 +80,20 @@ void handle_syscall(uint32_t stack_loc) {
     case Sys_Recv:
     {
         recv_args_t* args = info.args;
-        if (args->comm_channel == STDIN) {
-            *eax = ringbuffer_write_bytes(&ipc_stdin, )
-        }
+        // if (args->comm_channel == STDIN) {
+        //     // *eax = ringbuffer_write_bytes(&ipc_stdin, )
+        // }
 
-        if (ringbuffer_read()) {
-            char* dest = args->msg_dest->data;
-            for (uint32_t i = 0; i < msg_length && i < MSG_T_MAX; i++) {
-                dest[i] = msg_buf[i];
-            }
-            args->msg_dest->length = msg_length;
-        } else {
-            // There's no message able to be received, block the process.
-            sched_block(stack_loc);
-        }
+        // if (ringbuffer_read()) {
+        //     char* dest = args->msg_dest->data;
+        //     for (uint32_t i = 0; i < msg_length && i < MSG_T_MAX; i++) {
+        //         dest[i] = msg_buf[i];
+        //     }
+        //     args->msg_dest->length = msg_length;
+        // } else {
+        //     // There's no message able to be received, block the process.
+        //    sched_block(stack_loc);
+        // }
     }
     break;
 
