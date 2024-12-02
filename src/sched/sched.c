@@ -11,6 +11,7 @@ static void sched_interrupt_replace(unsigned int idx, uint32_t stack_loc);
 
 // Define the round-robin time slice.
 #define TIME_SLICE_CONSTANT 4
+#define INT_ENABLE_BIT 512
 
 // Initialize the scheduler.
 int sched_init() {
@@ -34,7 +35,8 @@ void sched_admit(uint32_t eip) {
                                     movl %%eax, %0;"  \
                                     :"=m" (eflags)     \
                                     ); 
-
+      // Set the interrupt enable bit for the process
+      eflags |= INT_ENABLE_BIT;
       scheduler.process_table[i].register_ctx.EFLAGS = eflags;
       scheduler.process_table[i].register_ctx.cs = 0x8; // TODO: fix this later.
       scheduler.process_table[i].state = PROCESS_READY;
@@ -110,7 +112,9 @@ static void sched_interrupt_store(unsigned int idx, uint32_t stack_loc) {
   scheduler.process_table[idx].register_ctx.ebx = ebx;
   scheduler.process_table[idx].register_ctx.ecx = ecx;
   scheduler.process_table[idx].register_ctx.edx = edx;
-  scheduler.process_table[idx].register_ctx.esp = esp;
+  
+  // NOTE(Britton): Add 12 to "pop" eip, cs, and eflags from the old process' stack
+  scheduler.process_table[idx].register_ctx.esp = esp + 12;
   scheduler.process_table[idx].register_ctx.ebp = ebp;
   scheduler.process_table[idx].register_ctx.esi = esi;
   scheduler.process_table[idx].register_ctx.edi = edi;
@@ -137,8 +141,16 @@ static void sched_interrupt_replace(unsigned int idx, uint32_t stack_loc) {
   *ecx = scheduler.process_table[idx].register_ctx.ecx;
   *edx = scheduler.process_table[idx].register_ctx.edx;
   *ebx = scheduler.process_table[idx].register_ctx.ebx;
-  *esp = scheduler.process_table[idx].register_ctx.esp;
+
+  // Subtract 12 to make room on the stack for iret arguments
+  *esp = scheduler.process_table[idx].register_ctx.esp - 12;
   *ebp = scheduler.process_table[idx].register_ctx.ebp;
   *esi = scheduler.process_table[idx].register_ctx.esi;
   *edi = scheduler.process_table[idx].register_ctx.edi;
+  
+  // NOTE(Britton): "push" eip, cs, and eflags to the incoming process' stack so that iret works
+  esp = (void*)*esp;
+  *(esp + 2)  = *EFLAGS;
+  *(esp + 1)  = *cs;
+  *esp = *eip;
 }
