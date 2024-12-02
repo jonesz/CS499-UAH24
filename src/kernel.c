@@ -150,4 +150,3 @@ void kernel_main() {
 //     idx = (idx + 1) & 0xFFFFFF;
 //   }
 // }
->>>>>>> sys_exit
