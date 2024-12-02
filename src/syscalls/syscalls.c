@@ -1,54 +1,55 @@
 #include "syscalls/syscalls.h"
 #include "syscalls/syscalls_internal.h"
+#include "sched/sched.h"
 #include <stdint.h>
 #include "vid/term.h"
+#include "ipc/ipc.h"
 
-static char msg_buf[MSG_T_MAX];
-static uint8_t msg_present;
-static uint32_t msg_length;
+extern ringbuffer_t process_buffers[MAX_PROCESSES];
+extern ringbuffer_t ipc_stdin;
 
 uint32_t send(msg_t* msg, uint32_t comm_channel) {
-    if (!msg_present) {
-        send_args_t args = {0};
-        syscall_info_t syscall_info = {0};
-        args.msg = msg;
-        args.comm_channel = comm_channel;
-        syscall_info.args = &args;
-        syscall_info.id = Sys_Send;
-        swint(&syscall_info);
-        return 1;
-    }
-    else {
-        return 0;
-    }
+    send_args_t args = {0};
+    syscall_info_t syscall_info = {0};
+    args.msg = msg;
+    args.comm_channel = comm_channel;
+    syscall_info.args = &args;
+    syscall_info.id = Sys_Send;
+    return swint(&syscall_info);
 }
+
 uint32_t recv(msg_t* msg_dest, uint32_t comm_channel) {
-    if (msg_present) {
-        recv_args_t args = {0};
-        syscall_info_t syscall_info = {0};
-        args.msg_dest = msg_dest;
-        args.comm_channel = comm_channel;
-        syscall_info.args = &args;
-        syscall_info.id = Sys_Recv;
-        swint(&syscall_info);
-        return 1;
-    }
-    else {
-        return 0;
-    }
-    return 0;
+    recv_args_t args = {0};
+    syscall_info_t syscall_info = {0};
+    args.msg_dest = msg_dest;
+    args.comm_channel = comm_channel;
+    syscall_info.args = &args;
+    syscall_info.id = Sys_Recv;
+    return swint(&syscall_info);
 }
+
 uint32_t sleep(uint32_t ticks) {
     sleep_args_t args = {0};
     args.ticks = ticks;
     syscall_info_t syscall_info = {0};
     syscall_info.args = &args;
     syscall_info.id = Sys_Sleep;
-    swint(&syscall_info);
-    return 1;
+    return swint(&syscall_info);
 }
 
-void handle_syscall(syscall_info_t info) {
+uint32_t exit() {
+    syscall_info_t syscall_info = {0};
+    syscall_info.id = Sys_Exit;
+    return swint(&syscall_info);
+}
+
+// Handle the syscall; this is called by the interrupt handler. In a proper world, the above runs
+// in userspace and the below runs in kernel space.
+void handle_syscall(uint32_t stack_loc) {
+    syscall_info_t info =
+        *(syscall_info_t *)(*(uint32_t *)(stack_loc - (4 * 0)));
+    uint32_t *eax = (uint32_t *)(stack_loc - (4 * 0));
+
     switch (info.id)
     {
     case Sys_Send:
@@ -56,13 +57,26 @@ void handle_syscall(syscall_info_t info) {
         send_args_t* args = info.args;
         uint32_t length = args->msg->length;
         char* src = args->msg->data;
-        if (!msg_present) {
-            for (uint32_t i = 0; i < length && i < MSG_T_MAX; i++) {
-                msg_buf[i] = src[i];
+
+        // If the comm_channel is STDOUT, go ahead and write it to the screen.
+        if (args->comm_channel == STDOUT) {
+            for (int i = 0; i < length && i < MSG_T_MAX; i++) {
+                term_write_char(&src[i]);
             }
-            msg_length = length;
-            msg_present = 1;
-            //term_format("SYS_SEND: %s\n", msg_buf);
+            *eax = 0;
+            return;
+        } else { 
+            // TODO: This might not be needed if we go ahead and just write to STDIN from the keyboard driver.
+            if (args->comm_channel == STDIN) {
+                *eax = ringbuffer_write_bytes(&ipc_stdin, src, length);
+                // We wrote to STDIN, we'll go ahead and block everything.
+                sched_unblock();
+                return;
+            } else if (args->comm_channel > MAX_PROCESSES) {
+                *eax = 1; 
+                return;
+            }
+            *eax = ringbuffer_write_bytes(&process_buffers[args->comm_channel], src, length);
         }
     }
         break;
@@ -70,15 +84,27 @@ void handle_syscall(syscall_info_t info) {
     case Sys_Recv:
     {
         recv_args_t* args = info.args;
-        if (msg_present) {
-            char* dest = args->msg_dest->data;
-            for (uint32_t i = 0; i < msg_length && i < MSG_T_MAX; i++) {
-                dest[i] = msg_buf[i];
-                msg_buf[i] = 0;
+
+        // Attempt to read from STDIN.
+        if (args->comm_channel == STDIN) {
+            uint8_t *dst = args->msg_dest->data;
+            // Check if there's a message within STDIN to read, if there's not, block.
+            if (ringbuffer_read(&ipc_stdin, dst)) {
+                // TODO: There was no message, block the currently running process and return 1.
+                sched_block(stack_loc);
+                *eax = 1;
+                return;
+            } else {
+                int i = 1; // We've read a single bit.
+                while (!ringbuffer_read(&ipc_stdin, (dst + i)) && i < MSG_T_MAX) {
+                    i++;
+                }
+                args->msg_dest->length = i;
+                *eax = 0;
+                return;
             }
-            args->msg_dest->length = msg_length;
-            msg_length = 0;
-            msg_present = 0;
+        } else {
+            // TODO Handle other.
         }
     }
     break;
@@ -94,8 +120,11 @@ void handle_syscall(syscall_info_t info) {
     }
     break;
 
+    case Sys_Exit:
+        break;
+
     default:
-    term_write("Unk\n");
+    term_write("Unk: ");
         break;
     }
 }

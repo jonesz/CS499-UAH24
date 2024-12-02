@@ -19,7 +19,7 @@ struct _sleep_args_t {
     uint32_t ticks;
 };
 
-void swint(syscall_info_t* syscall_info);
-void handle_syscall(syscall_info_t info);
+uint32_t swint(syscall_info_t* syscall_info);
+void handle_syscall(uint32_t stack_loc);
 
 #endif
