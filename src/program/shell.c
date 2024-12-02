@@ -24,11 +24,12 @@ static uint32_t read(char *buf, size_t len) {
 
 int shell_main(int argc, char **argv) {
   char buf[MSG_T_MAX] = {0};
+  printf("Dropping into a shell...\n");
 
   while (1) {
     printf("\n> ");
     if (read(buf, MSG_T_MAX)) {
-      if (strcmp("echo\n", buf) == 0) {
+      if (strncmp("echo", buf, 4) == 0) {
         printf("Spawning echo...\n");
       } else {
         printf("Unrecognized command.");
