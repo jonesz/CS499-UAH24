@@ -60,6 +60,8 @@ void interrupt_handler(uint32_t int_num, uint32_t stack_pos) {
 
   case 0x6:
     term_write("INVALID OPCODE?\n");
+    EIP = *(uint32_t *)(stack_pos + 4);
+    term_format("EIP: %x\n", &EIP);
     while (1) {
       volatile int b = 0;
     }
