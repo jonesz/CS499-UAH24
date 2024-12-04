@@ -43,6 +43,18 @@ uint32_t exit() {
     return swint(&syscall_info);
 }
 
+uint32_t spawn(uint32_t eip, uint32_t argc, char** argv, uint8_t argv_is_present) {
+    spawn_args_t args = {0};
+    args.eip = eip;
+    args.argc = argc;
+    args.argv = argv;
+    args.argv_is_present = argv_is_present;
+    syscall_info_t syscall_info = {0};
+    syscall_info.args = &args;
+    syscall_info.id = Sys_Spawn;
+    return swint(&syscall_info);
+}
+
 // Handle the syscall; this is called by the interrupt handler. In a proper world, the above runs
 // in userspace and the below runs in kernel space.
 void handle_syscall(uint32_t stack_loc) {
@@ -121,8 +133,15 @@ void handle_syscall(uint32_t stack_loc) {
     break;
 
     case Sys_Exit:
+        sched_kill(stack_loc);
         break;
 
+    case Sys_Spawn:
+            spawn_args_t* args = info.args;
+            uint32_t eip = args->eip;
+            sched_admit(eip);
+        break;
+    
     default:
     term_write("Unk: ");
         break;
