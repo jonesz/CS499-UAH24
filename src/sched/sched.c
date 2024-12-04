@@ -59,7 +59,7 @@ void sched_kill(uint32_t stack_loc) {
   for (int i = 0; i < MAX_PROCESSES; i++) {
     if (scheduler.process_table[i].state == PROCESS_RUNNING) {
       fixed_free((void *)scheduler.process_table[i].stack_addr); // De-allocate the stack.
-      scheduler.process_table[i].state == PROCESS_UNUSED;
+      scheduler.process_table[i].state = PROCESS_UNUSED;
       dispatch_interrupt(stack_loc); // Place a new process onto the stack.
       return;
     }
@@ -85,10 +85,16 @@ static void dispatch_interrupt(uint32_t stack_loc) {
 
   if (cur == -1) {
     // If we couldn't find a process that is running, we're at program startup.
-    // Throw the process at '0' on the stack.
-    sched_interrupt_replace(0, stack_loc);
-    scheduler.process_table[0].state = PROCESS_RUNNING;
-    uint32_t eip = *(uint32_t *)(stack_loc + 4);
+    // Throw the first ready process on the stack.
+    for (int i = 0; i < MAX_PROCESSES; i++) {
+      if (scheduler.process_table[i].state == PROCESS_READY) {
+      sched_interrupt_replace(i, stack_loc);
+      scheduler.process_table[i].state = PROCESS_RUNNING;
+      uint32_t eip = *(uint32_t *)(stack_loc + 4);
+      break;
+    }
+
+    }
     return;
   }
 
