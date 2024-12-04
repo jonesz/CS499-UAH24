@@ -132,14 +132,18 @@ void handle_syscall(uint32_t stack_loc) {
     }
     break;
 
+    // TODO(BP): Sys_Exit and Sys_Spawn should know why they are blocking and unblocking,
+    // so that processes can be unblocked for the correct reason
     case Sys_Exit:
         sched_kill(stack_loc);
+        sched_unblock();
         break;
 
     case Sys_Spawn:
             spawn_args_t* args = info.args;
             uint32_t eip = args->eip;
             sched_admit(eip);
+            sched_block(stack_loc);
         break;
     
     default:
