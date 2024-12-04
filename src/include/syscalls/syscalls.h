@@ -30,6 +30,6 @@ uint32_t send(msg_t* msg, uint32_t comm_channel);
 uint32_t recv(msg_t* msg_dest, uint32_t comm_channel);
 uint32_t sleep(uint32_t ticks);
 uint32_t exit();
-uint32_t spawn(uint32_t eip, uint32_t argc, char** argv, uint8_t argv_is_present);
+uint32_t spawn(uint32_t eip, uint32_t argc, char** argv, uint32_t argv_is_present);
 
 #endif

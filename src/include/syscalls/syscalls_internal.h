@@ -24,7 +24,7 @@ struct _spawn_args_t {
     uint32_t eip;
     uint32_t argc;
     char** argv;
-    uint8_t argv_is_present;
+    uint32_t argv_is_present;
 };
 
 uint32_t swint(syscall_info_t* syscall_info);

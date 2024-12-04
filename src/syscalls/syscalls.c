@@ -44,7 +44,7 @@ uint32_t exit() {
 }
 
 // TODO(BP): Implement argv because it is currently unused
-uint32_t spawn(uint32_t eip, uint32_t argc, char** argv, uint8_t argv_is_present) {
+uint32_t spawn(uint32_t eip, uint32_t argc, char** argv, uint32_t argv_is_present) {
     spawn_args_t args = {0};
     args.eip = eip;
     args.argc = argc;
@@ -142,8 +142,7 @@ void handle_syscall(uint32_t stack_loc) {
 
     case Sys_Spawn:
             spawn_args_t* args = info.args;
-            uint32_t eip = args->eip;
-            sched_admit(eip);
+            sched_admit(args->eip, args->argc, args->argv, args->argv_is_present);
             sched_block(stack_loc);
         break;
     

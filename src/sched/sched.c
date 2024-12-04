@@ -22,12 +22,32 @@ int sched_init() {
   return 0;
 }
 
-void sched_admit(uint32_t eip) {
+void sched_admit(uint32_t eip, uint32_t argc, char** argv, uint32_t argv_is_present) {
+  // Save eflags immediately
+  uint32_t eflags;
+  asm volatile ("pushfl;\
+                popl %%eax;       \
+                movl %%eax, %0;"  \
+                :"=m" (eflags)     \
+                ); 
   for (int i = 0; i < MAX_PROCESSES; i++) {
     if (scheduler.process_table[i].state == PROCESS_UNUSED) {
       scheduler.process_table[i].eip = eip;
 
       uint32_t stack = (uint32_t) fixed_alloc();
+      scheduler.process_table[i].stack_addr = stack;
+
+      // If argv is present then add it to the process' stack as arguments
+      // TODO(BP): This implementation is UNSAFE! Copy argv strings into new process memory
+      // This passes the argv pointer directly - meaning the new process has a raw
+      // pointer into the caller's memory.
+      if (argv_is_present) {
+        *(uint32_t *)stack = (uint32_t)argv;
+        stack -= 4;
+        *(uint32_t *)stack = argc;
+        stack -= 4;
+      }
+      
       // Without some `libcrt` type linker where `exit()` is linked at the end of `main`, we need
       // a way to trigger de-allocation of the process. Place an "exit stub" at the end which after
       // return, the program should fall to (this is what BP wanted; I disagree).
@@ -35,17 +55,10 @@ void sched_admit(uint32_t eip) {
 
       scheduler.process_table[i].register_ctx.ebp = stack;
       scheduler.process_table[i].register_ctx.esp = stack;
-      scheduler.process_table[i].stack_addr = stack;
 
       scheduler.process_table[i].register_ctx.cs = 0x8; // TODO: fix this later.
       scheduler.process_table[i].state = PROCESS_READY;
 
-      uint32_t eflags;
-      asm volatile ("pushfl;\
-                                    popl %%eax;       \
-                                    movl %%eax, %0;"  \
-                                    :"=m" (eflags)     \
-                                    ); 
       // Set the interrupt enable bit for the process
       eflags |= INT_ENABLE_BIT;
       scheduler.process_table[i].register_ctx.EFLAGS = eflags;
