@@ -14,7 +14,7 @@ typedef struct _scheduler_t {
 
 int sched_init();
 void sched_kill(uint32_t stack_loc);
-void sched_admit(uint32_t eip);
+void sched_admit(uint32_t eip, uint32_t argc, char** argv, uint32_t argv_is_present);
 void sched_interrupt(uint32_t counter, uint32_t stack_loc);
 void sched_block(uint32_t stack_loc);
 void sched_unblock();

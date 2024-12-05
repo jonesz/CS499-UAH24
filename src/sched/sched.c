@@ -22,12 +22,81 @@ int sched_init() {
   return 0;
 }
 
-void sched_admit(uint32_t eip) {
+void sched_admit(uint32_t eip, uint32_t argc, char** argv, uint32_t argv_is_present) {
+  // Save eflags immediately
+  uint32_t eflags;
+  asm volatile ("pushfl;\
+                popl %%eax;       \
+                movl %%eax, %0;"  \
+                :"=m" (eflags)     \
+                ); 
   for (int i = 0; i < MAX_PROCESSES; i++) {
     if (scheduler.process_table[i].state == PROCESS_UNUSED) {
       scheduler.process_table[i].eip = eip;
 
       uint32_t stack = (uint32_t) fixed_alloc();
+      scheduler.process_table[i].stack_addr = stack;
+
+      // If argv is present then add it to the process' stack as arguments
+      if (argv_is_present) {
+        
+        // Count the total number of bytes in argv
+        uint32_t counting = 1;
+        uint32_t argv_index = 0;
+        uint32_t byte_count = 0;
+        while (counting) {
+          uint32_t str_index = 0;
+          while (argv[argv_index][str_index])
+          {
+            str_index++;
+            byte_count++;
+          }
+          byte_count++;
+          argv_index++;
+          if (argv_index == argc) {
+            counting = 0;
+          }
+          
+        }
+
+        // Copy argv strings into new process memory
+        uint32_t copy_index = 0;
+        uint32_t str_index = 0;
+        uint32_t char_index = 0;
+        uint32_t new_strs[256] = {0};
+        stack -= byte_count + 3;
+        char* strs_loc = (char*)(stack + 4);
+
+        while (copy_index < byte_count) {
+          if (char_index == 0) {
+            // Save the address of each string
+            new_strs[str_index] = (uint32_t)(strs_loc + copy_index);
+          }
+          // Copy each byte of the original argv here
+          strs_loc[copy_index] = argv[str_index][char_index];
+          if (argv[str_index][char_index] == 0) {
+            str_index++;
+            char_index = 0;
+          }
+          else {
+            char_index++;
+          }
+          copy_index++;
+        }
+        
+        // Push the new argv pointers on the new process' stack
+        for (uint32_t i = 1; i <= argc; i++) {
+          *(uint32_t *)stack = (new_strs[argc - i]);
+          stack -= 4;
+        }
+
+        // Push argc and argv
+        *(uint32_t *)stack = stack + 4;
+        stack -= 4;
+        *(uint32_t *)stack = argc;
+        stack -= 4;
+      }
+      
       // Without some `libcrt` type linker where `exit()` is linked at the end of `main`, we need
       // a way to trigger de-allocation of the process. Place an "exit stub" at the end which after
       // return, the program should fall to (this is what BP wanted; I disagree).
@@ -35,17 +104,10 @@ void sched_admit(uint32_t eip) {
 
       scheduler.process_table[i].register_ctx.ebp = stack;
       scheduler.process_table[i].register_ctx.esp = stack;
-      scheduler.process_table[i].stack_addr = stack;
 
       scheduler.process_table[i].register_ctx.cs = 0x8; // TODO: fix this later.
       scheduler.process_table[i].state = PROCESS_READY;
 
-      uint32_t eflags;
-      asm volatile ("pushfl;\
-                                    popl %%eax;       \
-                                    movl %%eax, %0;"  \
-                                    :"=m" (eflags)     \
-                                    ); 
       // Set the interrupt enable bit for the process
       eflags |= INT_ENABLE_BIT;
       scheduler.process_table[i].register_ctx.EFLAGS = eflags;
@@ -59,7 +121,7 @@ void sched_kill(uint32_t stack_loc) {
   for (int i = 0; i < MAX_PROCESSES; i++) {
     if (scheduler.process_table[i].state == PROCESS_RUNNING) {
       fixed_free((void *)scheduler.process_table[i].stack_addr); // De-allocate the stack.
-      scheduler.process_table[i].state == PROCESS_UNUSED;
+      scheduler.process_table[i].state = PROCESS_UNUSED;
       dispatch_interrupt(stack_loc); // Place a new process onto the stack.
       return;
     }
@@ -85,10 +147,16 @@ static void dispatch_interrupt(uint32_t stack_loc) {
 
   if (cur == -1) {
     // If we couldn't find a process that is running, we're at program startup.
-    // Throw the process at '0' on the stack.
-    sched_interrupt_replace(0, stack_loc);
-    scheduler.process_table[0].state = PROCESS_RUNNING;
-    uint32_t eip = *(uint32_t *)(stack_loc + 4);
+    // Throw the first ready process on the stack.
+    for (int i = 0; i < MAX_PROCESSES; i++) {
+      if (scheduler.process_table[i].state == PROCESS_READY) {
+      sched_interrupt_replace(i, stack_loc);
+      scheduler.process_table[i].state = PROCESS_RUNNING;
+      uint32_t eip = *(uint32_t *)(stack_loc + 4);
+      break;
+    }
+
+    }
     return;
   }
 
