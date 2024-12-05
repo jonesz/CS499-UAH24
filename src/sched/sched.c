@@ -38,11 +38,60 @@ void sched_admit(uint32_t eip, uint32_t argc, char** argv, uint32_t argv_is_pres
       scheduler.process_table[i].stack_addr = stack;
 
       // If argv is present then add it to the process' stack as arguments
-      // TODO(BP): This implementation is UNSAFE! Copy argv strings into new process memory
-      // This passes the argv pointer directly - meaning the new process has a raw
-      // pointer into the caller's memory.
       if (argv_is_present) {
-        *(uint32_t *)stack = (uint32_t)argv;
+        
+        // Count the total number of bytes in argv
+        uint32_t counting = 1;
+        uint32_t argv_index = 0;
+        uint32_t byte_count = 0;
+        while (counting) {
+          uint32_t str_index = 0;
+          while (argv[argv_index][str_index])
+          {
+            str_index++;
+            byte_count++;
+          }
+          byte_count++;
+          argv_index++;
+          if (argv_index == argc) {
+            counting = 0;
+          }
+          
+        }
+
+        // Copy argv strings into new process memory
+        uint32_t copy_index = 0;
+        uint32_t str_index = 0;
+        uint32_t char_index = 0;
+        uint32_t new_strs[256] = {0};
+        stack -= byte_count + 3;
+        char* strs_loc = (char*)(stack + 4);
+
+        while (copy_index < byte_count) {
+          if (char_index == 0) {
+            // Save the address of each string
+            new_strs[str_index] = (uint32_t)(strs_loc + copy_index);
+          }
+          // Copy each byte of the original argv here
+          strs_loc[copy_index] = argv[str_index][char_index];
+          if (argv[str_index][char_index] == 0) {
+            str_index++;
+            char_index = 0;
+          }
+          else {
+            char_index++;
+          }
+          copy_index++;
+        }
+        
+        // Push the new argv pointers on the new process' stack
+        for (uint32_t i = 1; i <= argc; i++) {
+          *(uint32_t *)stack = (new_strs[argc - i]);
+          stack -= 4;
+        }
+
+        // Push argc and argv
+        *(uint32_t *)stack = stack + 4;
         stack -= 4;
         *(uint32_t *)stack = argc;
         stack -= 4;
