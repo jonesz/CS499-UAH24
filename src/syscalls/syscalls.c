@@ -1,153 +1,147 @@
 #include "syscalls/syscalls.h"
-#include "syscalls/syscalls_internal.h"
-#include "sched/sched.h"
-#include <stdint.h>
-#include "vid/term.h"
 #include "ipc/ipc.h"
+#include "sched/sched.h"
+#include "syscalls/syscalls_internal.h"
+#include "vid/term.h"
+#include <stdint.h>
 
 extern ringbuffer_t process_buffers[MAX_PROCESSES];
 extern ringbuffer_t ipc_stdin;
 
-uint32_t send(msg_t* msg, uint32_t comm_channel) {
-    send_args_t args = {0};
-    syscall_info_t syscall_info = {0};
-    args.msg = msg;
-    args.comm_channel = comm_channel;
-    syscall_info.args = &args;
-    syscall_info.id = Sys_Send;
-    return swint(&syscall_info);
+uint32_t send(msg_t *msg, uint32_t comm_channel) {
+  send_args_t args = {0};
+  syscall_info_t syscall_info = {0};
+  args.msg = msg;
+  args.comm_channel = comm_channel;
+  syscall_info.args = &args;
+  syscall_info.id = Sys_Send;
+  return swint(&syscall_info);
 }
 
-uint32_t recv(msg_t* msg_dest, uint32_t comm_channel) {
-    recv_args_t args = {0};
-    syscall_info_t syscall_info = {0};
-    args.msg_dest = msg_dest;
-    args.comm_channel = comm_channel;
-    syscall_info.args = &args;
-    syscall_info.id = Sys_Recv;
-    return swint(&syscall_info);
+uint32_t recv(msg_t *msg_dest, uint32_t comm_channel) {
+  recv_args_t args = {0};
+  syscall_info_t syscall_info = {0};
+  args.msg_dest = msg_dest;
+  args.comm_channel = comm_channel;
+  syscall_info.args = &args;
+  syscall_info.id = Sys_Recv;
+  return swint(&syscall_info);
 }
 
 uint32_t sleep(uint32_t ticks) {
-    sleep_args_t args = {0};
-    args.ticks = ticks;
-    syscall_info_t syscall_info = {0};
-    syscall_info.args = &args;
-    syscall_info.id = Sys_Sleep;
-    return swint(&syscall_info);
+  sleep_args_t args = {0};
+  args.ticks = ticks;
+  syscall_info_t syscall_info = {0};
+  syscall_info.args = &args;
+  syscall_info.id = Sys_Sleep;
+  return swint(&syscall_info);
 }
 
 uint32_t exit() {
-    syscall_info_t syscall_info = {0};
-    syscall_info.id = Sys_Exit;
-    return swint(&syscall_info);
+  syscall_info_t syscall_info = {0};
+  syscall_info.id = Sys_Exit;
+  return swint(&syscall_info);
 }
 
 // TODO(BP): Implement argv because it is currently unused
-uint32_t spawn(uint32_t eip, uint32_t argc, char** argv, uint32_t argv_is_present) {
-    spawn_args_t args = {0};
-    args.eip = eip;
-    args.argc = argc;
-    args.argv = argv;
-    args.argv_is_present = argv_is_present;
-    syscall_info_t syscall_info = {0};
-    syscall_info.args = &args;
-    syscall_info.id = Sys_Spawn;
-    return swint(&syscall_info);
+uint32_t spawn(uint32_t eip, uint32_t argc, char **argv) {
+  spawn_args_t args = {0};
+  args.eip = eip;
+  args.argc = argc;
+  args.argv = argv;
+  syscall_info_t syscall_info = {0};
+  syscall_info.args = &args;
+  syscall_info.id = Sys_Spawn;
+  return swint(&syscall_info);
 }
 
-// Handle the syscall; this is called by the interrupt handler. In a proper world, the above runs
-// in userspace and the below runs in kernel space.
+// Handle the syscall; this is called by the interrupt handler. In a proper
+// world, the above runs in userspace and the below runs in kernel space.
 void handle_syscall(uint32_t stack_loc) {
-    syscall_info_t info =
-        *(syscall_info_t *)(*(uint32_t *)(stack_loc - (4 * 0)));
-    uint32_t *eax = (uint32_t *)(stack_loc - (4 * 0));
+  syscall_info_t info = *(syscall_info_t *)(*(uint32_t *)(stack_loc - (4 * 0)));
+  uint32_t *eax = (uint32_t *)(stack_loc - (4 * 0));
 
-    switch (info.id)
-    {
-    case Sys_Send:
-    {
-        send_args_t* args = info.args;
-        uint32_t length = args->msg->length;
-        char* src = args->msg->data;
+  switch (info.id) {
+  case Sys_Send: {
+    send_args_t *args = info.args;
+    uint32_t length = args->msg->length;
+    char *src = args->msg->data;
 
-        // If the comm_channel is STDOUT, go ahead and write it to the screen.
-        if (args->comm_channel == STDOUT) {
-            for (int i = 0; i < length && i < MSG_T_MAX; i++) {
-                term_write_char(&src[i]);
-            }
-            *eax = 0;
-            return;
-        } else { 
-            // TODO: This might not be needed if we go ahead and just write to STDIN from the keyboard driver.
-            if (args->comm_channel == STDIN) {
-                *eax = ringbuffer_write_bytes(&ipc_stdin, src, length);
-                // We wrote to STDIN, we'll go ahead and block everything.
-                sched_unblock();
-                return;
-            } else if (args->comm_channel > MAX_PROCESSES) {
-                *eax = 1; 
-                return;
-            }
-            *eax = ringbuffer_write_bytes(&process_buffers[args->comm_channel], src, length);
-        }
-    }
-        break;
-
-    case Sys_Recv:
-    {
-        recv_args_t* args = info.args;
-
-        // Attempt to read from STDIN.
-        if (args->comm_channel == STDIN) {
-            uint8_t *dst = args->msg_dest->data;
-            // Check if there's a message within STDIN to read, if there's not, block.
-            if (ringbuffer_read(&ipc_stdin, dst)) {
-                // TODO: There was no message, block the currently running process and return 1.
-                sched_block(stack_loc);
-                *eax = 1;
-                return;
-            } else {
-                int i = 1; // We've read a single bit.
-                while (!ringbuffer_read(&ipc_stdin, (dst + i)) && i < MSG_T_MAX) {
-                    i++;
-                }
-                args->msg_dest->length = i;
-                *eax = 0;
-                return;
-            }
-        } else {
-            // TODO Handle other.
-        }
-    }
-    break;
-
-    case Sys_Sleep: 
-    {
-        // TODO(Britton): This should somehow tell the scheduler to block 
-        // For "ticks" ticks
-        sleep_args_t* args = info.args;
-        uint32_t ticks = args->ticks;
-        term_err("Sleep: ");
-        term_format("%x\n", &ticks);
-    }
-    break;
-
-    // TODO(BP): Sys_Exit and Sys_Spawn should know why they are blocking and unblocking,
-    // so that processes can be unblocked for the correct reason
-    case Sys_Exit:
-        sched_kill(stack_loc);
+    // If the comm_channel is STDOUT, go ahead and write it to the screen.
+    if (args->comm_channel == STDOUT) {
+      for (int i = 0; i < length && i < MSG_T_MAX; i++) {
+        term_write_char(&src[i]);
+      }
+      *eax = 0;
+      return;
+    } else {
+      // TODO: This might not be needed if we go ahead and just write to STDIN
+      // from the keyboard driver.
+      if (args->comm_channel == STDIN) {
+        *eax = ringbuffer_write_bytes(&ipc_stdin, src, length);
+        // We wrote to STDIN, we'll go ahead and block everything.
         sched_unblock();
-        break;
-
-    case Sys_Spawn:
-            spawn_args_t* args = info.args;
-            sched_admit(args->eip, args->argc, args->argv, args->argv_is_present);
-            sched_block(stack_loc);
-        break;
-    
-    default:
-    term_write("Unk: ");
-        break;
+        return;
+      } else if (args->comm_channel > MAX_PROCESSES) {
+        *eax = 1;
+        return;
+      }
+      *eax = ringbuffer_write_bytes(&process_buffers[args->comm_channel], src,
+                                    length);
     }
+  } break;
+
+  case Sys_Recv: {
+    recv_args_t *args = info.args;
+
+    // Attempt to read from STDIN.
+    if (args->comm_channel == STDIN) {
+      uint8_t *dst = args->msg_dest->data;
+      // Check if there's a message within STDIN to read, if there's not, block.
+      if (ringbuffer_read(&ipc_stdin, dst)) {
+        // TODO: There was no message, block the currently running process and
+        // return 1.
+        sched_block(stack_loc);
+        *eax = 1;
+        return;
+      } else {
+        int i = 1; // We've read a single bit.
+        while (!ringbuffer_read(&ipc_stdin, (dst + i)) && i < MSG_T_MAX) {
+          i++;
+        }
+        args->msg_dest->length = i;
+        *eax = 0;
+        return;
+      }
+    } else {
+      // TODO Handle other.
+    }
+  } break;
+
+  case Sys_Sleep: {
+    // TODO(Britton): This should somehow tell the scheduler to block
+    // For "ticks" ticks
+    sleep_args_t *args = info.args;
+    uint32_t ticks = args->ticks;
+    term_err("Sleep: ");
+    term_format("%x\n", &ticks);
+  } break;
+
+  // TODO(BP): Sys_Exit and Sys_Spawn should know why they are blocking and
+  // unblocking, so that processes can be unblocked for the correct reason
+  case Sys_Exit:
+    sched_kill(stack_loc);
+    sched_unblock();
+    break;
+
+  case Sys_Spawn:
+    spawn_args_t *args = info.args;
+    sched_admit_args(args->eip, args->argc, args->argv);
+    sched_block(stack_loc);
+    break;
+
+  default:
+    term_write("Unk: ");
+    break;
+  }
 }

@@ -21,7 +21,7 @@ ipc_test: test/ipc_test.c ipc.c
 .PHONY: clean format
 
 format:
-	clang-format -i *.c *.h
+	clang-format -i *.c
 
 clean:
 	$(RM) $(OBJECT) $(TARGET) ipc_test

@@ -1,10 +1,10 @@
 #include "interrupt/key_handler.h"
 #include "interrupt/asm_tools.h"
 #include "interrupt/interrupt.h"
+#include "sched/sched.h"
 #include "syscalls/syscalls.h"
 #include "vid/term.h"
 #include <stdint.h>
-#include "sched/sched.h"
 
 static uint32_t state_flags;
 static char msg[MSG_MAX + 1];

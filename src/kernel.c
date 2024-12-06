@@ -2,6 +2,7 @@
 #include "sched/sched.h"
 #include "mem/kmalloc.h"
 #include "mem/fixed_alloc.h"
+#include "mem/bump_alloc.h"
 #include "mem/multiboot.h"
 #include "vid/term.h"
 #include "interrupt/acpi.h"
@@ -101,10 +102,14 @@ void kernel_main() {
   }
 
   ipc_init();
-  fixed_alloc_init(0x4000000, 4096 * 1000, 4096);
-  sched_admit((uint32_t)shell_main, 0, 0, 0);
+
+  // TODO: What should these be?
+  fixed_alloc_init(0x4000000, 4096 * 512, 4096);
+  bump_alloc_init( 0x4000000 + (4096 * 512) + 1, 4096 * 10);
+
+  sched_admit((uint32_t)shell_main);
   // Include a do-nothing process so if the shell blocks, we can still jump to a process that does something.
-  sched_admit((uint32_t)spin, 0, 0, 0);
+  sched_admit((uint32_t)spin);
 
   init_pic();
 

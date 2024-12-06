@@ -51,7 +51,8 @@ void *fixed_alloc() {
       header++; // Skip over existing allocated chunks.
     } else {
       *header = 1;
-      uint32_t a = (uint32_t)(allocator.offset + max_blocks + (i * allocator.block_sz));
+      uint32_t a =
+          (uint32_t)(allocator.offset + max_blocks + (i * allocator.block_sz));
       return (void *)(allocator.offset + max_blocks + (i * allocator.block_sz));
     }
   }
