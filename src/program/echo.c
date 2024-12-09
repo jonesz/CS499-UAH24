@@ -25,7 +25,6 @@ __attribute__((cdecl)) int echo_main(int argc, char **argv) {
     y = x;
     z = y;
     i = z;
-
   }
 
   return 0;
