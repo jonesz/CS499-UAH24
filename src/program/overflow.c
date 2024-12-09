@@ -47,7 +47,7 @@ __attribute__((cdecl)) int overflow_main(int argc, char **argv) {
       printf("Overflowed\n");
       overflows += 1;
     }
-    idx = (idx + 1) & 0xFFFFFFF;
+    idx = (idx + 1) & 0x7FFFFFF;
   }
   return 0;
 }
