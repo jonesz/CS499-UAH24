@@ -94,6 +94,11 @@ int shell_main(int argc, char **argv) {
           bump_free(NULL);
         }
 
+      } else if (strncmp("cat", buf, 3) == 0) {
+        spawn((uint32_t)&cat_main, to_argc(buf), to_argv(buf));
+        for (int i = 0; i < to_argc(buf) + 1; i++) {
+          bump_free(NULL);
+        }
       } else {
         printf("Unrecognized command.");
       }
