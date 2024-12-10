@@ -43,7 +43,6 @@ uint32_t exit() {
   return swint(&syscall_info);
 }
 
-// TODO(BP): Implement argv because it is currently unused
 uint32_t spawn(uint32_t eip, uint32_t argc, char **argv) {
   spawn_args_t args = {0};
   args.eip = eip;
