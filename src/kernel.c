@@ -110,6 +110,7 @@ void kernel_main() {
   sched_admit((uint32_t)shell_main);
   // Include a do-nothing process so if the shell blocks, we can still jump to a process that does something.
   sched_admit((uint32_t)spin);
+  sched_admit((uint32_t)dumb_fs);
 
   init_pic();
 

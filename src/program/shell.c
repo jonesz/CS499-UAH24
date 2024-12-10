@@ -88,7 +88,6 @@ int shell_main(int argc, char **argv) {
     if (read(buf, MSG_T_MAX)) {
       if (strncmp("echo", buf, 4) == 0) {
         spawn((uint32_t)&echo_main, to_argc(buf), to_argv(buf));
-
         // Free the ARGV arr + the individual strings.
         for (int i = 0; i < to_argc(buf) + 1; i++) {
           bump_free(NULL);
