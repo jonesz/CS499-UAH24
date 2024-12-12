@@ -5,6 +5,7 @@
 #include "vid/term.h"
 #include <stdint.h>
 
+extern uint32_t last_writer[MAX_PROCESSES];
 extern ringbuffer_t process_buffers[MAX_PROCESSES];
 extern ringbuffer_t ipc_stdin;
 
@@ -99,7 +100,7 @@ void handle_syscall(uint32_t stack_loc) {
       // from the keyboard driver.
       if (args->comm_channel == STDIN) {
         *eax = ringbuffer_write_bytes(&ipc_stdin, src, length);
-        // We wrote to STDIN, we'll go ahead and block everything that blocks on STDIN.
+        // We wrote to STDIN, we'll go ahead and unblock everything that blocks on STDIN.
         sched_unblock(STDIN);
         return;
       } else if (args->comm_channel > MAX_PROCESSES) {
@@ -108,6 +109,7 @@ void handle_syscall(uint32_t stack_loc) {
       }
       *eax = ringbuffer_write_bytes(&process_buffers[args->comm_channel], src,
                                     length);
+      return;
     }
   } break;
 

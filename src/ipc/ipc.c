@@ -13,6 +13,8 @@
  * `read_ptr`); as a result, we can tell when the buffer has mem to be read.
  */
 
+// Store the last PID that wrote the `process_buffers`.
+uint32_t last_writer[MAX_PROCESSES];
 ringbuffer_t process_buffers[MAX_PROCESSES];
 ringbuffer_t stdin;
 
