@@ -147,7 +147,7 @@ void handle_syscall(uint32_t stack_loc) {
 		return;
         } else {
 		int i = 1;
-        	while (!ringbuffer_read(&ipc_stdin, (dst + i)) && i < MSG_T_MAX) {
+        	while (!ringbuffer_read(&process_buffers[args->comm_channel], (dst + i)) && i < MSG_T_MAX) {
           		i++;
         	}
         	args->msg_dest->length = i;
@@ -181,7 +181,7 @@ void handle_syscall(uint32_t stack_loc) {
 
   case Sys_Spawn_Bg: {
     spawn_args_t *args = info.args;
-    sched_admit_args(args->eip, args->argc, args->argv);
+    uint32_t p = sched_admit_args(args->eip, args->argc, args->argv);
   } break;
 
  case Sys_PID: {

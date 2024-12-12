@@ -54,10 +54,10 @@ kernel.iso: kernel.bin grub.cfg
 	$(RM) -r build/
 
 start: kernel.bin
-	qemu-system-i386 -kernel kernel.bin
+	qemu-system-i386 -kernel kernel.bin -m 1G
 
 start-iso: kernel.iso
-	qemu-system-i386 -cdrom kernel.iso
+	qemu-system-i386 -cdrom kernel.iso -m 1G
 
 .PHONY: clean format
 

@@ -93,11 +93,14 @@ int shell_main(int argc, char **argv) {
         for (int i = 0; i < to_argc(buf) + 1; i++) {
           bump_free(NULL);
         }
-
-      } else if (strncmp("overflow", buf, 8) == 0) {
-        spawn_bg((uint32_t)&overflow_main, to_argc(buf), to_argv(buf));
-
+      } else if (strncmp("overflow_nb", buf, 11) == 0) {
+        spawn_bg((uint32_t)&overflow_nb_main, to_argc(buf), to_argv(buf));
         // Free the ARGV arr + the individual strings.
+        //for (int i = 0; i < to_argc(buf) + 1; i++) {
+        //  bump_free(NULL);
+        //}
+      } else if (strncmp("overflow", buf, 8) == 0) {
+        spawn((uint32_t)&overflow_main, to_argc(buf), to_argv(buf));
         for (int i = 0; i < to_argc(buf) + 1; i++) {
           bump_free(NULL);
         }

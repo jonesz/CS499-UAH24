@@ -2,7 +2,7 @@ CC=i686-elf-gcc
 AR=i686-elf-ar
 
 INCLUDE = -I../include/
-OBJECT = shell.o echo.o overflow.o ping.o pong.o
+OBJECT = shell.o echo.o overflow.o ping.o pong.o 
 TARGET = libprogram.a
 
 all: $(TARGET)

@@ -103,11 +103,34 @@ void kernel_main() {
 
   ipc_init();
 
+  /*
+  // Select the memory region to use for paging
+  uint8_t *mmap = (uint8_t *)boot_info->mmap_addr;
+  uint8_t *cur = mmap;
+  uint32_t biggest_region_size = 0;
+  uint32_t biggest_region = 0;
+  while (cur < mmap + boot_info->mmap_length) {
+    uint64_t *base = (uint64_t *)(cur + 4);
+    uint64_t *length = (uint64_t *)(cur + 8 + 4);
+    uint32_t *flags = (uint32_t *)(cur + 16 + 4);
+    if (*flags == 1) {
+      if (*length > biggest_region_size) {
+        biggest_region = *base;
+        biggest_region_size = *length;
+      }
+    }
+    cur += *(uint64_t *)cur + 4;
+  }
+  */
+
   // TODO: What should these be?
   #define BLK_SIZE 1024*1024
   #define BLK_COUNT 512
-  fixed_alloc_init(0x4000000, BLK_SIZE * BLK_COUNT, BLK_COUNT);
-  bump_alloc_init( 0x4000000 + (4096 * 512) + 1, 4096 * 10);
+  #define BASE 0x04000000
+  fixed_alloc_init(BASE, BLK_SIZE * BLK_COUNT, BLK_COUNT);
+  bump_alloc_init(BASE + (BLK_SIZE * BLK_COUNT) + 1, 4096 * 10);
+  uint32_t i = BASE + (BLK_SIZE * BLK_COUNT) + 1;
+  term_format("BUMPA_LLOC_START: %x\n", &i);
 
   sched_admit((uint32_t)shell_main);
   // Include a do-nothing process so if the shell blocks, we can still jump to a process that does something.

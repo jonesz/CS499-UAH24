@@ -56,3 +56,30 @@ __attribute__((cdecl)) int overflow_main(int argc, char **argv) {
   printf("Exiting...\n");
   return 0;
 }
+
+__attribute__((cdecl)) int overflow_nb_main(int argc, char **argv) {
+  printf("Overflow called with: ");
+  printf(argv[1]);
+
+  uint32_t def = 32;
+  uint32_t x = 0;
+  if (argc > 1) {
+    x = str_toint(argv[1]);
+  }
+  if (x == 0) {
+    x = def;
+  }
+  volatile uint32_t idx = 1;
+  uint32_t overflows = 0;
+  while (overflows < x) {
+
+    if (idx == 0) {
+      printf("Overflowed_nb\n");
+      overflows += 1;
+    }
+    idx = (idx + 1) & 0x7FFFFFF;
+  }
+
+  printf("Exiting...\n");
+  return 0;
+}
