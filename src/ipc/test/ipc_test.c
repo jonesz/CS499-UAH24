@@ -9,6 +9,7 @@ int main(int argc, char **argv) {
   ringbuffer_t rb;
   ringbuffer_init(&rb);
 
+  assert(ringbuffer_read(&rb, buf) == 0);
   assert(ringbuffer_write_bytes(&rb, "hello", strlen("hello")) == 0);
   for (int i = 0; i < strlen("hello"); i++) {
     assert(ringbuffer_read(&rb, buf) == 0);
