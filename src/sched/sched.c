@@ -263,3 +263,12 @@ static void sched_interrupt_replace(unsigned int idx, uint32_t stack_loc) {
 static void exit_stub() {
   exit(); // Call the exit() syscall.
 }
+
+uint32_t sched_who_is_running() {
+  for (uint32_t i = 0; i < MAX_PROCESSES; i++) {
+    if (scheduler.process_table[i].state == PROCESS_RUNNING) {
+	return i;
+    }
+  }
+}
+
