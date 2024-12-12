@@ -29,8 +29,10 @@ uint32_t str_toint(char *s) {
   }
   return sum;
 }
-__attribute__((cdecl)) int overflow_main(int argc, char **argv) {
 
+__attribute__((cdecl)) int overflow_main(int argc, char **argv) {
+  printf("Overflow called with: ");
+  printf(argv[1]);
   uint32_t def = 32;
   uint32_t x = 0;
   if (argc > 1) {
@@ -49,5 +51,7 @@ __attribute__((cdecl)) int overflow_main(int argc, char **argv) {
     }
     idx = (idx + 1) & 0x7FFFFFF;
   }
+
+  printf("Exiting...\n");
   return 0;
 }
