@@ -59,6 +59,9 @@ start: kernel.bin
 start-iso: kernel.iso
 	qemu-system-i386 -cdrom kernel.iso
 
+debug: kernel.bin
+	 qemu-system-i386 -kernel kernel.bin -s -S
+
 .PHONY: clean format
 
 clean:
