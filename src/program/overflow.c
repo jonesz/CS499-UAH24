@@ -33,8 +33,6 @@ uint32_t str_toint(char *s) {
 __attribute__((cdecl)) int overflow_main(int argc, char **argv) {
   printf("Overflow called with: ");
   printf(argv[1]);
-  uint32_t p = pid();
-  term_format("%x\n", &p);
 
   uint32_t def = 32;
   uint32_t x = 0;
