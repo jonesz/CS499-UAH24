@@ -43,6 +43,12 @@ uint32_t exit() {
   return swint(&syscall_info);
 }
 
+uint32_t pid() {
+  syscall_info_t syscall_info = {};
+  syscall_info.id = Sys_PID;
+  return swint(&syscall_info);
+}
+
 // TODO(BP): Implement argv because it is currently unused
 uint32_t spawn(uint32_t eip, uint32_t argc, char **argv) {
   spawn_args_t args = {0};
@@ -116,7 +122,20 @@ void handle_syscall(uint32_t stack_loc) {
         return;
       }
     } else {
-      // TODO Handle other.
+      uint8_t *dst = args->msg_dest->data;
+      if (ringbuffer_read(&process_buffers[args->comm_channel], dst)) {
+        sched_block(stack_loc, args->comm_channel);
+        *eax = 1;
+        return;
+      } else {
+        int i = 1;
+        while (!ringbuffer_read(&process_buffers[args->comm_channel], (dst + i)) && i < MSG_T_MAX) {
+          i++;
+        }
+        args->msg_dest->length = i;
+        *eax = 0;
+        return;
+      }
     }
   } break;
 
@@ -142,6 +161,11 @@ void handle_syscall(uint32_t stack_loc) {
     sched_block(stack_loc, pid);
     break;
 
+  case Sys_PID:
+    pid = sched_running();
+    *eax = pid;
+    break;
+    
   default:
     term_write("Unk: ");
     break;

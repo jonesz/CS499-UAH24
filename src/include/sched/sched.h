@@ -20,5 +20,6 @@ uint32_t sched_admit_args(uint32_t eip, uint32_t argc, char** argv);
 void sched_interrupt(uint32_t counter, uint32_t stack_loc);
 void sched_block(uint32_t stack_loc, uint32_t waiting);
 void sched_unblock(uint32_t waiting);
+uint32_t sched_running();
 
 #endif // SCHED_H
