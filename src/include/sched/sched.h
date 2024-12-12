@@ -10,14 +10,16 @@
 typedef struct _scheduler_t {
   // A set of running processes.
   pcb_t process_table[MAX_PROCESSES];
+  uint32_t block[MAX_PROCESSES];
 } scheduler_t;
 
 int sched_init();
-void sched_kill(uint32_t stack_loc);
+uint32_t sched_kill(uint32_t stack_loc);
 void sched_admit(uint32_t eip);
-void sched_admit_args(uint32_t eip, uint32_t argc, char** argv);
+uint32_t sched_admit_args(uint32_t eip, uint32_t argc, char** argv);
 void sched_interrupt(uint32_t counter, uint32_t stack_loc);
-void sched_block(uint32_t stack_loc);
-void sched_unblock();
+void sched_block(uint32_t stack_loc, uint32_t waiting);
+void sched_unblock(uint32_t waiting);
+uint32_t sched_running();
 
 #endif // SCHED_H

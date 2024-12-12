@@ -81,6 +81,8 @@ static char **to_argv(char *buf) {
 
 int shell_main(int argc, char **argv) {
   char buf[MSG_T_MAX] = {0};
+  printf("Spawning filesystem...\n");
+  spawn_bg((uint32_t)&dumb_fs, 0, NULL);
   printf("Dropping into a shell...\n");
 
   while (1) {
@@ -88,19 +90,20 @@ int shell_main(int argc, char **argv) {
     if (read(buf, MSG_T_MAX)) {
       if (strncmp("echo", buf, 4) == 0) {
         spawn((uint32_t)&echo_main, to_argc(buf), to_argv(buf));
-
         // Free the ARGV arr + the individual strings.
         for (int i = 0; i < to_argc(buf) + 1; i++) {
           bump_free(NULL);
         }
 
+      } else if (strncmp("cat", buf, 3) == 0) {
+        spawn((uint32_t)&cat_main, to_argc(buf), to_argv(buf));
+        for (int i = 0; i < to_argc(buf) + 1; i++) {
+          bump_free(NULL);
+        }
       } else if (strncmp("overflow", buf, 8) == 0) {
         spawn_bg((uint32_t)&overflow_main, to_argc(buf), to_argv(buf));
-
-        // Free the ARGV arr + the individual strings.
-        for (int i = 0; i < to_argc(buf) + 1; i++) {
-          bump_free(NULL);
-        }
+        // TODO: spawn_bg will mem leak beacuse we don't know when it exits; will completely screw
+        // over the bump allocator.
       } else {
         printf("Unrecognized command.");
       }

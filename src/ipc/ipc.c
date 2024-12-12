@@ -15,6 +15,7 @@
 
 ringbuffer_t process_buffers[MAX_PROCESSES];
 ringbuffer_t stdin;
+uint32_t writer[MAX_PROCESSES];
 
 void ringbuffer_init(ringbuffer_t *rb) {
   rb->r_ptr = 0;
