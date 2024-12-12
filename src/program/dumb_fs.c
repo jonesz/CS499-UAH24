@@ -10,7 +10,7 @@ static uint32_t read(char *buf, size_t len) {
   msg.length = len;
   uint32_t result = 1;
   while (result) {
-    result = recv(&msg, 2);
+    result = recv(&msg, SELF_PID);
   }
 
   return msg.length;
@@ -41,9 +41,9 @@ void dumb_fs() {
   char buf[MSG_T_MAX] = {0};
 
   while (1) {
-    printf("Started filesystem...\n");
+    msg_t msg = {0};
+    msg.data = buf;
     if (read(buf, MSG_T_MAX)) {
-      printf("YEALLO\n");
     }
   }
 }
