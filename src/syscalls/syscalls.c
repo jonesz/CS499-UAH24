@@ -74,8 +74,6 @@ uint32_t pid() {
   return swint(&syscall_info);
 }
 
-
-
 // Handle the syscall; this is called by the interrupt handler. In a proper
 // world, the above runs in userspace and the below runs in kernel space.
 void handle_syscall(uint32_t stack_loc) {
@@ -109,6 +107,8 @@ void handle_syscall(uint32_t stack_loc) {
       }
       *eax = ringbuffer_write_bytes(&process_buffers[args->comm_channel], src,
                                     length);
+      last_writer[args->comm_channel] = args->msg->sender;
+      sched_unblock(args->comm_channel);
       return;
     }
   } break;
@@ -119,6 +119,7 @@ void handle_syscall(uint32_t stack_loc) {
     // Attempt to read from STDIN.
     if (args->comm_channel == STDIN) {
       uint8_t *dst = args->msg_dest->data;
+      args->msg_dest->sender = STDIN;
       // Check if there's a message within STDIN to read, if there's not, block.
       if (ringbuffer_read(&ipc_stdin, dst)) {
         // TODO: There was no message, block the currently running process and
@@ -136,7 +137,23 @@ void handle_syscall(uint32_t stack_loc) {
         return;
       }
     } else {
-      // TODO Handle other.
+	uint8_t *dst = args->msg_dest->data;
+	args->msg_dest->sender = last_writer[args->comm_channel];
+	args->msg_dest->length = 0;
+	if (ringbuffer_read(&process_buffers[args->comm_channel], dst)) {
+		// There was no message, block.
+		sched_block(stack_loc, args->comm_channel);
+		*eax = 1;
+		return;
+        } else {
+		int i = 1;
+        	while (!ringbuffer_read(&ipc_stdin, (dst + i)) && i < MSG_T_MAX) {
+          		i++;
+        	}
+        	args->msg_dest->length = i;
+		*eax = 0;
+		return;
+	}
     }
   } break;
 
