@@ -95,7 +95,7 @@ uint32_t sched_admit_args(uint32_t eip, uint32_t argc, char **argv) {
       scheduler.process_table[i].state = PROCESS_READY;
 
       // Set the interrupt enable bit for the process
-      scheduler.process_table[i].register_ctx.EFLAGS = eflags;
+      scheduler.process_table[i].register_ctx.EFLAGS = eflags | INT_ENABLE_BIT;
       return i;
     }
   }

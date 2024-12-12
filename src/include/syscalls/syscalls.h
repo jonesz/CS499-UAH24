@@ -14,7 +14,7 @@ typedef struct _syscall_info_t syscall_info_t;
 
 typedef struct _msg_t msg_t;
 
-enum _syscall_id_t {Sys_Send, Sys_Recv, Sys_Sleep, Sys_Exit, Sys_Spawn, Sys_PID};
+enum _syscall_id_t {Sys_Send, Sys_Recv, Sys_Sleep, Sys_Exit, Sys_Spawn, Sys_Spawn_Bg, Sys_PID};
 
 struct  _syscall_info_t {
     void* args;
@@ -34,5 +34,6 @@ uint32_t sleep(uint32_t ticks);
 uint32_t exit();
 uint32_t spawn(uint32_t eip, uint32_t argc, char** argv);
 uint32_t pid();
+uint32_t spawn_bg(uint32_t eip, uint32_t argc, char** argv);
 
 #endif

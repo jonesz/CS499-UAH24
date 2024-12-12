@@ -7,6 +7,7 @@
 
 extern ringbuffer_t process_buffers[MAX_PROCESSES];
 extern ringbuffer_t ipc_stdin;
+extern uint32_t writer[MAX_PROCESSES];
 
 uint32_t send(msg_t *msg, uint32_t comm_channel) {
   send_args_t args = {0};
@@ -61,6 +62,17 @@ uint32_t spawn(uint32_t eip, uint32_t argc, char **argv) {
   return swint(&syscall_info);
 }
 
+uint32_t spawn_bg(uint32_t eip, uint32_t argc, char **argv) {
+  spawn_args_t args = {0};
+  args.eip = eip;
+  args.argc = argc;
+  args.argv = argv;
+  syscall_info_t syscall_info = {0};
+  syscall_info.args = &args;
+  syscall_info.id = Sys_Spawn_Bg;
+  return swint(&syscall_info);
+}
+
 // Handle the syscall; this is called by the interrupt handler. In a proper
 // world, the above runs in userspace and the below runs in kernel space.
 void handle_syscall(uint32_t stack_loc) {
@@ -88,14 +100,18 @@ void handle_syscall(uint32_t stack_loc) {
         *eax = ringbuffer_write_bytes(&ipc_stdin, src, length);
         // We wrote to STDIN, we'll go ahead and unblock the shell.
         sched_unblock(STDIN);
+        *eax = 0;
         return;
       } else if (args->comm_channel > MAX_PROCESSES) {
         *eax = 1;
         return;
-      }
-      *eax = ringbuffer_write_bytes(&process_buffers[args->comm_channel], src,
+      } else {
+        *eax = ringbuffer_write_bytes(&process_buffers[args->comm_channel], src,
                                     length);
-      sched_unblock(args->comm_channel);
+        writer[args->comm_channel] = args->msg->sender;
+        sched_unblock(args->comm_channel);
+        return;
+      }
     }
   } break;
 
@@ -123,6 +139,8 @@ void handle_syscall(uint32_t stack_loc) {
       }
     } else {
       uint8_t *dst = args->msg_dest->data;
+      args->msg_dest->sender = writer[args->comm_channel];
+      args->msg_dest->length = 0;
       if (ringbuffer_read(&process_buffers[args->comm_channel], dst)) {
         sched_block(stack_loc, args->comm_channel);
         *eax = 1;
@@ -155,19 +173,24 @@ void handle_syscall(uint32_t stack_loc) {
     sched_unblock(pid);
     break;
 
-  case Sys_Spawn:
+  case Sys_Spawn: {
     spawn_args_t *args = info.args;
     pid = sched_admit_args(args->eip, args->argc, args->argv);
     sched_block(stack_loc, pid);
-    break;
+  } break;
+  
+  case Sys_Spawn_Bg: {
+    spawn_args_t *args = info.args;
+    sched_admit_args(args->eip, args->argc, args->argv);
+  } break;
 
   case Sys_PID:
     pid = sched_running();
     *eax = pid;
     break;
-    
+
   default:
-    term_write("Unk: ");
+    term_format("swint: %x", &(info.id));
     break;
   }
 }

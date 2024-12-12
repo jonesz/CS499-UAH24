@@ -11,7 +11,7 @@
  * buffer has mem to be read.
  */
 
-typedef struct _ringbuffet_t {
+typedef struct _ringbuffer_t {
   uint8_t buf[RINGBUFFER_SIZE];
   size_t r_ptr;
   size_t w_ptr;

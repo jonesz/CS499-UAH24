@@ -3,18 +3,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "libc/string.h"
-
-static uint32_t read(char *buf, size_t len) {
-  msg_t msg = {0};
-  msg.data = buf;
-  msg.length = len;
-  uint32_t result = 1;
-  while (result) {
-    result = recv(&msg, SELF_PID);
-  }
-
-  return msg.length;
-}
+#include "vid/term.h"
 
 static void printf(char *buf) {
   msg_t msg = {0};
@@ -37,13 +26,30 @@ typedef struct FWCfgFile {
   char name[56];
 } FWCfgFile;
 
-void dumb_fs() {
+void dumb_fs(int argc, char **argv) {
+  uint32_t p = pid();
+  if (p != DUMB_FS_PID) {
+    printf("Not running under correct pid...\n");
+  }
   char buf[MSG_T_MAX] = {0};
 
+  msg_t msg_out = {0};
+  msg_out.data = buf;
+  msg_out.sender = p;
+
   while (1) {
-    msg_t msg = {0};
-    msg.data = buf;
-    if (read(buf, MSG_T_MAX)) {
+    // read a request.
+    msg_t msg_in = {0};
+    msg_in.data = buf;
+    msg_in.length = MSG_T_MAX;
+    uint32_t result = 1;
+    while (result) {
+      result = recv(&msg_in, p);
+      if (result == 0) {
+        msg_out.data = buf;
+        msg_out.length = strlen(buf);
+        send(&msg_out, msg_in.sender);
+      }
     }
   }
 }

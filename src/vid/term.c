@@ -95,13 +95,15 @@ void term_write_char(const char *c) {
     term_col = 1;
   }
 
+  // Increment the row if the character is a newline,
+  // and only actually print if it's not
   if (*c == '\n') {
     term_row++;
     term_col = 0;
+  } else {
+    size_t term_pos = term_row * VGA_WIDTH + term_col;
+    term_buf[term_pos] = vga_entry(*c, VGA_COLOR_WHITE);
   }
-
-  size_t term_pos = term_row * VGA_WIDTH + term_col;
-  term_buf[term_pos] = vga_entry(*c, VGA_COLOR_WHITE);
 }
 
 // Write out a string to the terminal buffer.
