@@ -11,7 +11,7 @@ typedef struct _scheduler_t {
   // A set of running processes.
   pcb_t process_table[MAX_PROCESSES];
   // The process that is blocking the specific index.
-  uint32_t block_owner[MAX_PROCESSES];
+  uint32_t blocker[MAX_PROCESSES];
 } scheduler_t;
 
 int sched_init();

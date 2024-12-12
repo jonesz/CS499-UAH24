@@ -57,7 +57,7 @@ void sched_admit(uint32_t eip) {
 }
 
 // NOTE: Can only be called within an interrupt.
-void sched_admit_args(uint32_t eip, uint32_t argc, char **argv) {
+uint32_t sched_admit_args(uint32_t eip, uint32_t argc, char **argv) {
   // Save eflags immediately
   uint32_t eflags;
   asm volatile("pushfl;\
@@ -96,20 +96,20 @@ void sched_admit_args(uint32_t eip, uint32_t argc, char **argv) {
 
       // Set the interrupt enable bit for the process
       scheduler.process_table[i].register_ctx.EFLAGS = eflags | INT_ENABLE_BIT;
-      return;
+      return i;
     }
   }
 }
 
 // Called from a `Sys_Exit` interrupt.
-void sched_kill(uint32_t stack_loc) {
+uint32_t sched_kill(uint32_t stack_loc) {
   for (int i = 0; i < MAX_PROCESSES; i++) {
     if (scheduler.process_table[i].state == PROCESS_RUNNING) {
       fixed_free((void *)scheduler.process_table[i]
                      .stack_addr); // De-allocate the stack.
       scheduler.process_table[i].state = PROCESS_UNUSED;
       dispatch_interrupt(stack_loc); // Place a new process onto the stack.
-      return;
+      return i;
     }
   }
 }
@@ -165,7 +165,7 @@ static void dispatch_interrupt(uint32_t stack_loc) {
 }
 
 // Block the current process.
-void sched_block(uint32_t stack_loc) {
+void sched_block(uint32_t stack_loc, uint32_t blocker) {
   // Find the current process that's running.
   int cur;
   for (int i = 0; i < MAX_PROCESSES; i++) {
@@ -180,13 +180,14 @@ void sched_block(uint32_t stack_loc) {
 
   // Set the old process as blocked.
   scheduler.process_table[cur].state = PROCESS_BLOCKED;
+  scheduler.blocker[cur] = blocker;
   return;
 }
 
 // Go ahead and unblock everything.
-void sched_unblock() {
+void sched_unblock(uint32_t blocker) {
   for (int i = 0; i < MAX_PROCESSES; i++) {
-    if (scheduler.process_table[i].state == PROCESS_BLOCKED) {
+    if (scheduler.process_table[i].state == PROCESS_BLOCKED && scheduler.blocker[i] == blocker) {
       scheduler.process_table[i].state = PROCESS_READY;
     }
   }

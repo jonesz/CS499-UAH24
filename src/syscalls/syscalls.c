@@ -88,8 +88,8 @@ void handle_syscall(uint32_t stack_loc) {
       // from the keyboard driver.
       if (args->comm_channel == STDIN) {
         *eax = ringbuffer_write_bytes(&ipc_stdin, src, length);
-        // We wrote to STDIN, we'll go ahead and block everything.
-        sched_unblock();
+        // We wrote to STDIN, we'll go ahead and block everything that blocks on STDIN.
+        sched_unblock(STDIN);
         return;
       } else if (args->comm_channel > MAX_PROCESSES) {
         *eax = 1;
@@ -110,7 +110,7 @@ void handle_syscall(uint32_t stack_loc) {
       if (ringbuffer_read(&ipc_stdin, dst)) {
         // TODO: There was no message, block the currently running process and
         // return 1.
-        sched_block(stack_loc);
+        sched_block(stack_loc, STDIN);
         *eax = 1;
         return;
       } else {
@@ -139,14 +139,14 @@ void handle_syscall(uint32_t stack_loc) {
   // TODO(BP): Sys_Exit and Sys_Spawn should know why they are blocking and
   // unblocking, so that processes can be unblocked for the correct reason
   case Sys_Exit:
-    sched_kill(stack_loc);
-    sched_unblock();
+    uint32_t p = sched_kill(stack_loc);
+    sched_unblock(p);
     break;
 
   case Sys_Spawn: {
     spawn_args_t *args = info.args;
-    sched_admit_args(args->eip, args->argc, args->argv);
-    sched_block(stack_loc);
+    uint32_t p = sched_admit_args(args->eip, args->argc, args->argv);
+    sched_block(stack_loc, p);
   } break;
 
   case Sys_Spawn_Bg: {
