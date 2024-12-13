@@ -5,6 +5,8 @@
 #include "mem/bump_alloc.h"
 #include "vid/term.h"
 
+// A simple bump allocator.
+
 typedef struct _allocator_t {
   uint32_t offset;
   size_t sz;

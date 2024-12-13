@@ -1,8 +1,9 @@
 /**
  * `mem/buddy_alloc.c`, Ethan Jones <erj0005@uah.edu>
  **/
-
 #include "mem/buddy_alloc.h"
+
+// TODO: all of this code is busted; don't use it.
 
 typedef struct _node_t {
   uint32_t offset;
@@ -28,7 +29,6 @@ void buddy_alloc_init(uint32_t offset, size_t sz) {
 }
 
 void *buddy_alloc(size_t sz) { return internal_alloc(&allocator, sz); }
-
 void buddy_alloc_free(void *ptr) { internal_free(&allocator, ptr); }
 
 static void *internal_alloc(node_t *node, size_t req) {

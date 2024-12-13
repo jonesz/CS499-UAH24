@@ -1,3 +1,4 @@
+// KMAlloc written by Lane Wright.
 #include "mem/kmalloc.h"
 #include "vid/term.h"
 #include <stdbool.h>
