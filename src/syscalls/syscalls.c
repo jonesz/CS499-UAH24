@@ -171,17 +171,20 @@ void handle_syscall(uint32_t stack_loc) {
   case Sys_Exit:
     uint32_t p = sched_kill(stack_loc);
     sched_unblock(p);
+    *eax = p;
     break;
 
   case Sys_Spawn: {
     spawn_args_t *args = info.args;
     uint32_t p = sched_admit_args(args->eip, args->argc, args->argv);
     sched_block(stack_loc, p);
+    *eax = p;
   } break;
 
   case Sys_Spawn_Bg: {
     spawn_args_t *args = info.args;
     uint32_t p = sched_admit_args(args->eip, args->argc, args->argv);
+    *eax = p;
   } break;
 
  case Sys_PID: {
