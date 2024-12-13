@@ -1,3 +1,6 @@
+#ifndef INTERRUPT_ACPI_H
+#define INTERRUPT_ACPI_H
+
 #include <stdint.h>
 
 typedef struct _RSDP_t RSDP_t;
@@ -118,3 +121,5 @@ struct _FADT {
   GenericAddressStructure X_GPE0Block;
   GenericAddressStructure X_GPE1Block;
 };
+
+#endif // INTERRUPT_ACPI_H
