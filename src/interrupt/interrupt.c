@@ -3,6 +3,7 @@
  * https://wiki.osdev.org/Interrupt_Descriptor_Table#Structure_on_IA-32
  *
  * Ethan Jones <erj0005@uah.edu>.
+ * BP.
  */
 
 #include "interrupt/interrupt.h"
@@ -20,7 +21,6 @@ uint32_t counter = 0;
 
 #define MAX_IDT_ENTRIES 256
 static void idt_set_descriptor(int idx, void *isr, uint8_t flags);
-
 static void timer_handler(uint32_t stack_loc);
 
 extern void *isr;
