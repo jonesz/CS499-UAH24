@@ -74,6 +74,8 @@ uint32_t pid() {
   return swint(&syscall_info);
 }
 
+// TODO: Refactor the below mess; it's likely that is the cause of a significant amount of bugs.
+
 // Handle the syscall; this is called by the interrupt handler. In a proper
 // world, the above runs in userspace and the below runs in kernel space.
 void handle_syscall(uint32_t stack_loc) {
