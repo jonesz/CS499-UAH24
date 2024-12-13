@@ -18,6 +18,8 @@ int main(int argc, char **argv) {
   }
 
   assert(ringbuffer_read(&rb, buf) == 1);
+
+  assert(ringbuffer_write_bytes(&rb, "yellow", strlen("yellow")) == 0);
   printf("\nTests succesful.\n");
   return 0;
 }
