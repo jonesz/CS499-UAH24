@@ -13,17 +13,21 @@
  * `read_ptr`); as a result, we can tell when the buffer has mem to be read.
  */
 
+// TODO: These global extern portions are dumb.
 // Store the last PID that wrote the `process_buffers`.
 uint32_t last_writer[MAX_PROCESSES];
+// Actual IPC holders both stdin and processes.
 ringbuffer_t process_buffers[MAX_PROCESSES];
-ringbuffer_t stdin;
+ringbuffer_t ipc_stdin;
 
+// Initialize a ringbuffer.
 void ringbuffer_init(ringbuffer_t *rb) {
   rb->r_ptr = 0;
   rb->w_ptr = 0;
   return;
 }
 
+// Write a single byte to the ringbuffer; will return 0 on success.
 int ringbuffer_write(ringbuffer_t *rb, uint8_t byte) {
   if ((rb->w_ptr + 1) % RINGBUFFER_SIZE == rb->r_ptr) {
     return 1; // The buffer is full.
@@ -34,6 +38,7 @@ int ringbuffer_write(ringbuffer_t *rb, uint8_t byte) {
   return 0;
 }
 
+// Write multipel bytes to the ringbuffer; will return 0 on success.
 int ringbuffer_write_bytes(ringbuffer_t *rb, uint8_t *buf, size_t len) {
   for (int i = 1; i < len + 1; i++) {
     if ((rb->w_ptr + i) % RINGBUFFER_SIZE == rb->r_ptr) {
@@ -48,6 +53,7 @@ int ringbuffer_write_bytes(ringbuffer_t *rb, uint8_t *buf, size_t len) {
   return 0;
 }
 
+// Read a single byte from a ringbuffer; return 0 on success.
 int ringbuffer_read(ringbuffer_t *rb, uint8_t *buf) {
   if (rb->r_ptr == rb->w_ptr) {
     return 1; // There's nothing to read from the buffer.
@@ -57,9 +63,6 @@ int ringbuffer_read(ringbuffer_t *rb, uint8_t *buf) {
   rb->r_ptr = (rb->r_ptr + 1) % RINGBUFFER_SIZE;
   return 0;
 }
-
-ringbuffer_t process_buffers[MAX_PROCESSES];
-ringbuffer_t ipc_stdin;
 
 void ipc_init() {
   for (int i = 0; i < MAX_PROCESSES; i++) {
